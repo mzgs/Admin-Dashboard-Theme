@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A Bootstrap customer dashboard theme with a sidebar and sample customer table.">
+  <title>Customers · Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://mzgs.github.io/fa7/css/all.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="sidebar-expanded">
+  <a class="visually-hidden-focusable skip-link" href="#main">Skip to customers</a>
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="sidebar-header">
+      <div class="workspace-switcher"><span class="workspace-mark"></span><span>Evergreen</span><i class="fa-light fa-sort" aria-hidden="true"></i></div>
+      <button class="rail-button sidebar-toggle" aria-label="Collapse navigation" aria-expanded="true" title="Collapse navigation"><i class="fa-light fa-sidebar" aria-hidden="true"></i></button>
+    </div>
+    <nav class="sidebar-nav" aria-label="Workspace navigation">
+      <div class="sidebar-links">
+        <button class="rail-button" title="Home" aria-label="Home"><i class="fa-light fa-house" aria-hidden="true"></i><span>Home</span></button>
+        <button class="rail-button" title="Inbox" aria-label="Inbox"><i class="fa-light fa-inbox" aria-hidden="true"></i><span>Inbox</span></button>
+        <button class="rail-button" title="Messages" aria-label="Messages"><i class="fa-light fa-message" aria-hidden="true"></i><span>Messages</span></button>
+      </div>
+      <section class="sidebar-group">
+        <button class="sidebar-group-title" data-bs-toggle="collapse" data-bs-target="#company-links" aria-expanded="true" aria-controls="company-links">Company <i class="fa-light fa-chevron-down" aria-hidden="true"></i></button>
+        <div class="collapse show" id="company-links"><div class="sidebar-links">
+        <button class="rail-button" title="Balances" aria-label="Balances"><i class="fa-light fa-wallet" aria-hidden="true"></i><span>Balances</span></button>
+        <button class="rail-button active" aria-current="page" title="Customers" aria-label="Customers"><i class="fa-light fa-users" aria-hidden="true"></i><span>Customers</span></button>
+        <button class="rail-button" title="Transactions" aria-label="Transactions"><i class="fa-light fa-arrows-rotate" aria-hidden="true"></i><span>Transactions</span></button>
+        <button class="rail-button" title="Workflows" aria-label="Workflows"><i class="fa-light fa-code-branch" aria-hidden="true"></i><span>Workflows</span></button>
+        <button class="rail-button" title="Tasks" aria-label="Tasks"><i class="fa-light fa-square-check" aria-hidden="true"></i><span>Tasks</span></button>
+        </div></div>
+      </section>
+      <section class="sidebar-group sidebar-spaces">
+        <button class="sidebar-group-title" data-bs-toggle="collapse" data-bs-target="#spaces-links" aria-expanded="true" aria-controls="spaces-links">Spaces <i class="fa-light fa-chevron-down" aria-hidden="true"></i></button>
+        <div class="collapse show" id="spaces-links"><div class="sidebar-links">
+        <button class="rail-button" title="Payments" aria-label="Payments"><i class="fa-light fa-circle-check" aria-hidden="true"></i><span>Payments</span></button>
+        <button class="rail-button" title="Billing" aria-label="Billing"><i class="fa-light fa-receipt" aria-hidden="true"></i><span>Billing</span></button>
+        <button class="rail-button" title="Reporting" aria-label="Reporting"><i class="fa-light fa-file-chart-column" aria-hidden="true"></i><span>Reporting</span></button>
+        <button class="rail-button" title="Apps" aria-label="Apps"><i class="fa-light fa-table-cells-large" aria-hidden="true"></i><span>Apps</span></button>
+        <button class="rail-button" title="More" aria-label="More"><i class="fa-light fa-ellipsis" aria-hidden="true"></i><span>More</span></button>
+        </div></div>
+      </section>
+    </nav>
+    <div class="sidebar-bottom"><button class="rail-button profile-button" aria-label="Louis Cooper account" title="Louis Cooper"><span class="profile-avatar"></span><span>Louis Cooper</span></button><button class="rail-button profile-more" aria-label="Account menu" title="Account menu"><i class="fa-light fa-ellipsis" aria-hidden="true"></i></button></div>
+  </aside>
+
+  <main id="main" class="workspace" tabindex="-1">
+    <header class="topbar d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-2"><button class="btn icon-button mobile-menu" aria-label="Open navigation" aria-expanded="false"><i class="fa-light fa-bars" aria-hidden="true"></i></button><h1 class="page-title"><i class="fa-light fa-users" aria-hidden="true"></i> Customers <span class="count-pill">24</span></h1></div>
+      <button type="button" class="btn icon-button theme-toggle" aria-label="Switch to light theme" title="Switch to light theme"><i class="fa-light fa-sun" aria-hidden="true"></i></button>
+    </header>
+
+    <div class="table-container" role="region" aria-label="Customers table, scroll for more columns" tabindex="0">
+      <table>
+        <caption class="visually-hidden">Sample customer accounts.</caption>
+        <thead><tr><th scope="col" class="number-column">#</th><th scope="col" class="primary-column"><i class="fa-light fa-buildings" aria-hidden="true"></i> Account</th><th scope="col"><i class="fa-light fa-location-dot" aria-hidden="true"></i> Location</th><th scope="col"><i class="fa-light fa-globe" aria-hidden="true"></i> Website</th><th scope="col"><i class="fa-light fa-dollar-sign" aria-hidden="true"></i> Amount</th><th scope="col"><i class="fa-light fa-calendar" aria-hidden="true"></i> Start Date</th></tr></thead>
+        <tbody>
+          <tr><td class="number-column">1</td><td><div class="label-cell"><span class="avatar blue" aria-hidden="true"></span><span>Global Dynamics Corp</span></div></td><td class="text-cell text-body-secondary">San Francisco, US</td><td class="text-cell"><span class="text-link">global.co</span></td><td class="numeric-cell">$109,951.42</td><td class="date-cell">Sep 1, 2026</td></tr>
+          <tr><td class="number-column">2</td><td><div class="label-cell"><span class="avatar coral" aria-hidden="true"></span><span>Innovatech Industries</span></div></td><td class="text-cell text-body-secondary">London, UK</td><td class="text-cell"><span class="text-link">innovatech.co</span></td><td class="numeric-cell">$106,879.62</td><td class="date-cell">Sep 2, 2026</td></tr>
+          <tr><td class="number-column">3</td><td><div class="label-cell"><span class="avatar amber" aria-hidden="true"></span><span>Pioneer Technologies</span></div></td><td class="text-cell text-body-secondary">Berlin, DE</td><td class="text-cell"><span class="text-link">pioneer.co</span></td><td class="numeric-cell">$206,084.47</td><td class="date-cell">Sep 3, 2026</td></tr>
+          <tr><td class="number-column">4</td><td><div class="label-cell"><span class="avatar green" aria-hidden="true"></span><span>Apex Consulting</span></div></td><td class="text-cell text-body-secondary">Tokyo, JP</td><td class="text-cell"><span class="text-link">apex.co</span></td><td class="numeric-cell">$158,548.89</td><td class="date-cell">Sep 4, 2026</td></tr>
+          <tr><td class="number-column">5</td><td><div class="label-cell"><span class="avatar purple" aria-hidden="true"></span><span>Evergreen Logistics</span></div></td><td class="text-cell text-body-secondary">Austin, US</td><td class="text-cell"><span class="text-link">evergreen.co</span></td><td class="numeric-cell">$84,971.59</td><td class="date-cell">Sep 5, 2026</td></tr>
+          <tr><td class="number-column">6</td><td><div class="label-cell"><span class="avatar cyan" aria-hidden="true"></span><span>Crestview Communications</span></div></td><td class="text-cell text-body-secondary">Toronto, CA</td><td class="text-cell"><span class="text-link">crestview.co</span></td><td class="numeric-cell">$73,990.77</td><td class="date-cell">Sep 6, 2026</td></tr>
+          <tr><td class="number-column">7</td><td><div class="label-cell"><span class="avatar blue" aria-hidden="true"></span><span>Legacy Health Solutions</span></div></td><td class="text-cell text-body-secondary">Sydney, AU</td><td class="text-cell"><span class="text-link">legacy.co</span></td><td class="numeric-cell">$236,491.21</td><td class="date-cell">Sep 7, 2026</td></tr>
+          <tr><td class="number-column">8</td><td><div class="label-cell"><span class="avatar coral" aria-hidden="true"></span><span>Frontier Energy Corp</span></div></td><td class="text-cell text-body-secondary">Paris, FR</td><td class="text-cell"><span class="text-link">frontier.co</span></td><td class="numeric-cell">$208,902.56</td><td class="date-cell">Sep 8, 2026</td></tr>
+          <tr><td class="number-column">9</td><td><div class="label-cell"><span class="avatar amber" aria-hidden="true"></span><span>Noble Industries</span></div></td><td class="text-cell text-body-secondary">Singapore, SG</td><td class="text-cell"><span class="text-link">noble.co</span></td><td class="numeric-cell">$96,142.11</td><td class="date-cell">Sep 9, 2026</td></tr>
+          <tr><td class="number-column">10</td><td><div class="label-cell"><span class="avatar green" aria-hidden="true"></span><span>Summit Software Systems</span></div></td><td class="text-cell text-body-secondary">New York, US</td><td class="text-cell"><span class="text-link">summit.co</span></td><td class="numeric-cell">$72,103.20</td><td class="date-cell">Sep 10, 2026</td></tr>
+          <tr class="selected"><td class="number-column">11</td><td><div class="label-cell"><span class="avatar purple" aria-hidden="true"></span><span>Vertex Financial Services</span></div></td><td class="text-cell text-body-secondary">Seattle, US</td><td class="text-cell"><span class="text-link">vertex.co</span></td><td class="numeric-cell">$227,661.10</td><td class="date-cell">Sep 11, 2026</td></tr>
+          <tr><td class="number-column">12</td><td><div class="label-cell"><span class="avatar cyan" aria-hidden="true"></span><span>Quantum Computing</span></div></td><td class="text-cell text-body-secondary">Melbourne, AU</td><td class="text-cell"><span class="text-link">quantum.co</span></td><td class="numeric-cell">$210,853.30</td><td class="date-cell">Sep 12, 2026</td></tr>
+          <tr><td class="number-column">13</td><td><div class="label-cell"><span class="avatar blue" aria-hidden="true"></span><span>Horizon Ventures</span></div></td><td class="text-cell text-body-secondary">Dublin, IE</td><td class="text-cell"><span class="text-link">horizon.co</span></td><td class="numeric-cell">$241,296.12</td><td class="date-cell">Sep 13, 2026</td></tr>
+          <tr><td class="number-column">14</td><td><div class="label-cell"><span class="avatar coral" aria-hidden="true"></span><span>Nexus Tech</span></div></td><td class="text-cell text-body-secondary">Amsterdam, NL</td><td class="text-cell"><span class="text-link">nexus.co</span></td><td class="numeric-cell">$132,892.23</td><td class="date-cell">Sep 14, 2026</td></tr>
+          <tr><td class="number-column">15</td><td><div class="label-cell"><span class="avatar amber" aria-hidden="true"></span><span>Stellar Aerospace</span></div></td><td class="text-cell text-body-secondary">San Francisco, US</td><td class="text-cell"><span class="text-link">stellar.co</span></td><td class="numeric-cell">$60,883.02</td><td class="date-cell">Sep 15, 2026</td></tr>
+          <tr><td class="number-column">16</td><td><div class="label-cell"><span class="avatar green" aria-hidden="true"></span><span>Orion Enterprises</span></div></td><td class="text-cell text-body-secondary">London, UK</td><td class="text-cell"><span class="text-link">orion.co</span></td><td class="numeric-cell">$213,225.34</td><td class="date-cell">Sep 16, 2026</td></tr>
+          <tr><td class="number-column">17</td><td><div class="label-cell"><span class="avatar purple" aria-hidden="true"></span><span>Zenith Corp</span></div></td><td class="text-cell text-body-secondary">Berlin, DE</td><td class="text-cell"><span class="text-link">zenith.co</span></td><td class="numeric-cell">$148,642.23</td><td class="date-cell">Sep 17, 2026</td></tr>
+          <tr><td class="number-column">18</td><td><div class="label-cell"><span class="avatar cyan" aria-hidden="true"></span><span>Aurora Systems</span></div></td><td class="text-cell text-body-secondary">Tokyo, JP</td><td class="text-cell"><span class="text-link">aurora.co</span></td><td class="numeric-cell">$158,957.36</td><td class="date-cell">Sep 18, 2026</td></tr>
+          <tr><td class="number-column">19</td><td><div class="label-cell"><span class="avatar blue" aria-hidden="true"></span><span>Catalyst Innovations</span></div></td><td class="text-cell text-body-secondary">Austin, US</td><td class="text-cell"><span class="text-link">catalyst.co</span></td><td class="numeric-cell">$105,761.75</td><td class="date-cell">Sep 19, 2026</td></tr>
+          <tr><td class="number-column">20</td><td><div class="label-cell"><span class="avatar coral" aria-hidden="true"></span><span>Titan Dynamics</span></div></td><td class="text-cell text-body-secondary">Toronto, CA</td><td class="text-cell"><span class="text-link">titan.co</span></td><td class="numeric-cell">$191,706.61</td><td class="date-cell">Sep 20, 2026</td></tr>
+          <tr><td class="number-column">21</td><td><div class="label-cell"><span class="avatar amber" aria-hidden="true"></span><span>Paragon Solutions</span></div></td><td class="text-cell text-body-secondary">Sydney, AU</td><td class="text-cell"><span class="text-link">paragon.co</span></td><td class="numeric-cell">$192,288.61</td><td class="date-cell">Sep 21, 2026</td></tr>
+          <tr><td class="number-column">22</td><td><div class="label-cell"><span class="avatar green" aria-hidden="true"></span><span>Omega Group</span></div></td><td class="text-cell text-body-secondary">Paris, FR</td><td class="text-cell"><span class="text-link">omega.co</span></td><td class="numeric-cell">$171,701.76</td><td class="date-cell">Sep 22, 2026</td></tr>
+          <tr><td class="number-column">23</td><td><div class="label-cell"><span class="avatar purple" aria-hidden="true"></span><span>Vanguard Logistics</span></div></td><td class="text-cell text-body-secondary">Singapore, SG</td><td class="text-cell"><span class="text-link">vanguard.co</span></td><td class="numeric-cell">$223,232.85</td><td class="date-cell">Sep 23, 2026</td></tr>
+          <tr><td class="number-column">24</td><td><div class="label-cell"><span class="avatar cyan" aria-hidden="true"></span><span>Meridian Financial</span></div></td><td class="text-cell text-body-secondary">New York, US</td><td class="text-cell"><span class="text-link">meridian.co</span></td><td class="numeric-cell">$88,487.42</td><td class="date-cell">Sep 24, 2026</td></tr>
+        </tbody>
+        <tfoot><tr><td class="number-column">–</td><td><i class="fa-light fa-list-ol" aria-hidden="true"></i> <span class="ms-1">Total: 24 accounts</span></td><td></td><td></td><td>Sum: $3,721,655.54</td><td></td></tr></tfoot>
+      </table>
+    </div>
+    <footer class="workspace-footer"><span><span class="status-dot"></span> Static theme preview</span><span>24 sample customers</span></footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
