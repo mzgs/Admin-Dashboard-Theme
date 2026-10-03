@@ -73,8 +73,9 @@ table .number-column { width: 60px; min-width: 60px; text-align: center; padding
 .numeric-cell { min-width: 160px; font-variant-numeric: tabular-nums; }
 .date-cell { min-width: 150px; color: var(--muted) !important; }
 table tfoot td { position: sticky; bottom: 0; z-index: 2; background: var(--surface-raised); color: var(--muted); border-top: 1px solid var(--line); border-bottom: 0; font-size: 12px; height: 44px; }
-.workspace-footer { min-height: 30px; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 10px; border-top: 1px solid var(--line); }
-.status-dot { width: 5px; height: 5px; display: inline-block; background: #62b89a; border-radius: 50%; margin-right: 6px; }
-@media (max-width: 767px) { .sidebar { display: none; }.sidebar-mobile-open .sidebar { display: flex; box-shadow: 12px 0 40px #0005; }.workspace, .sidebar-expanded .workspace { margin-left: 0; }.mobile-menu { display: block; }.topbar { padding: 0 10px; }.topbar .gap-2 { gap: 0 !important; }.workspace-footer { padding: 0 10px; } }
+.workspace-footer { flex-shrink: 0; min-height: 36px; padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; align-items: center; background: var(--surface-raised); color: var(--muted); font-size: 11px; line-height: 20px; border-top: 1px solid var(--line); }
+.footer-status { display: inline-flex; align-items: center; gap: 6px; }
+.status-dot { width: 5px; height: 5px; flex-shrink: 0; background: #62b89a; border-radius: 50%; }
+@media (max-width: 767px) { .sidebar { display: none; }.sidebar-mobile-open .sidebar { display: flex; box-shadow: 12px 0 40px #0005; }.workspace, .sidebar-expanded .workspace { margin-left: 0; }.mobile-menu { display: block; }.topbar { padding: 0 10px; }.topbar .gap-2 { gap: 0 !important; }.workspace-footer { padding-inline: 10px; } }
 @media (max-width: 420px) { .count-pill { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
