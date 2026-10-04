@@ -48,6 +48,23 @@ updateActiveSection();
   };
   all('[data-notify]').forEach(button => button.addEventListener('click', () => notify(button.dataset.notify)));
   all('[data-bs-toggle="tooltip"]').forEach(element => new bootstrap.Tooltip(element));
+  all('[data-bs-toggle="popover"]').forEach(element => new bootstrap.Popover(element));
+  find('#demo-range').addEventListener('input', event => { find('#range-value').textContent = `${event.target.value}%`; });
+  find('#demo-check-mixed').indeterminate = true;
+  let demoPage = 1;
+  find('.demo-pagination').addEventListener('click', event => {
+    const button = event.target.closest('[data-page]');
+    if (!button) return;
+    demoPage = Math.max(1, Math.min(3, button.dataset.page === 'next' ? demoPage + 1 : button.dataset.page === 'previous' ? demoPage - 1 : Number(button.dataset.page)));
+    all('.demo-pagination [data-page]').forEach(item => {
+      const active = Number(item.dataset.page) === demoPage;
+      item.parentElement.classList.toggle('active', active);
+      if (active) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
+      item.disabled = (item.dataset.page === 'previous' && demoPage === 1) || (item.dataset.page === 'next' && demoPage === 3);
+      item.parentElement.classList.toggle('disabled', item.disabled);
+    });
+    find('#demo-page-content').textContent = `Example page ${demoPage} of 3`;
+  });
 
   const periods = {
     month: { label: 'September 2026', cadence: 'Daily', revenue: 48290, customers: 2420, orders: 1864, conversion: '3.62%', revenueTrend: '12.8%', customerTrend: '8.2%', orderTrend: '6.4%', conversionTrend: '0.4 pp', labels: ['Sep 1', 'Sep 6', 'Sep 11', 'Sep 16', 'Sep 21', 'Sep 26', 'Sep 30'], points: [26, 36, 32, 47, 40, 55, 51, 64, 48, 62, 56, 73, 67, 82, 75, 90, 84, 96], previous: [22, 28, 25, 38, 34, 42, 39, 47, 43, 50, 45, 57, 51, 59, 54, 68, 60, 71] },

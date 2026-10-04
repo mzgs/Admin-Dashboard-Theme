@@ -1,8 +1,8 @@
 # Admin Dashboard Theme
 
-Open `index.html` for the dashboard. Home, Table, and sidebar destinations are sections in this one page, linked with `#` IDs (for example, `#home` and `#generic-table`).
+Open `index.html` for the design template. Home contains the full component showcase, grouped into Foundations, Buttons & badges, Form controls, Navigation, Feedback & states, Overlays, Cards & lists, and Dashboard & data display. The left menu links to these groups and the transaction, task, and table examples with `#` IDs.
 
-The home dashboard includes sample analytics, line/donut/bar charts, searchable and paginated transactions, CSV exports, task management, and a shadcn-inspired component showcase built with Bootstrap. Shared CSS theme tokens style neutral buttons, inputs, cards, tabs, badges, menus, and dialogs in light and dark mode. Transactions and tasks live for the current page session; theme and workspace preferences use browser storage.
+The Bootstrap showcase includes typography, color swatches, icons, avatars, button variants and sizes, badges, native form inputs and validation states, tabs, accordion, breadcrumbs, dropdowns, pagination, alerts, loading skeletons, empty states, dialogs, side panels, toasts, tooltips, popovers, lists, card layouts, carousel, collapsible content, and progress bars. Dashboard patterns include sample analytics, line/donut/bar charts, searchable and paginated transactions, CSV exports, and task management. Shared CSS theme tokens style neutral buttons, inputs, cards, tabs, badges, menus, and dialogs in light and dark mode. Transactions and tasks live for the current page session; theme and workspace preferences use browser storage.
 
 Serve locally with `python3 -m http.server 8000`, then visit `http://localhost:8000/index.html`. Bootstrap and Font Awesome load from the existing CDN links, so an internet connection is required.
 
