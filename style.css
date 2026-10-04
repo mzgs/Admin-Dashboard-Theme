@@ -234,6 +234,7 @@ table tfoot td { position: sticky; bottom: 0; z-index: 2; background: var(--surf
 .dashboard-page .modal.fade .modal-dialog { transform: scale(.98); transition: transform var(--motion-exit) var(--motion-exit-curve); }
 .dashboard-page .modal.show .modal-dialog { transform: none; transition-duration: var(--motion-enter); transition-timing-function: var(--motion-modal-curve); }
 .dashboard-page .modal-backdrop.fade { transition: opacity var(--motion-control) linear; }
+.dashboard-page .modal-backdrop, .dashboard-page .offcanvas-backdrop { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .dashboard-page .modal-backdrop.show, .dashboard-page .offcanvas-backdrop.show { opacity: .75; }
 .dashboard-page .offcanvas { transition: transform var(--motion-exit) var(--motion-exit-curve); }
 .dashboard-page .offcanvas.showing { transition-duration: var(--motion-enter); transition-timing-function: var(--motion-enter-curve); }
