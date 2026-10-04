@@ -113,10 +113,21 @@ const { chromium } = require('playwright');
     await page.click('#task-form [type="submit"]');
     await page.waitForSelector('#task-modal', { state: 'hidden' });
     assert.equal(await page.locator('#task-list input').count(), 6);
-    await page.click('[data-bs-target="#reset-modal"]');
-    await page.click('#reset-tasks');
+    await page.waitForSelector('.modal-backdrop', { state: 'hidden' });
+    // A confirmation may be clicked before Bootstrap finishes opening the dialog.
+    await page.evaluate(() => {
+      document.querySelector('[data-bs-target="#reset-modal"]').click();
+      document.querySelector('#reset-tasks').click();
+    });
+    await page.waitForFunction(() => !document.body.classList.contains('modal-open'));
     await page.waitForSelector('#reset-modal', { state: 'hidden' });
     assert.equal(await page.locator('#task-progress').getAttribute('aria-valuenow'), '0');
+    await page.evaluate(() => {
+      document.querySelector('#overlays [data-bs-target="#account-modal"]').click();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await page.waitForFunction(() => !document.body.classList.contains('modal-open'));
+    assert.equal(await page.locator('.modal-backdrop').count(), 0);
     await page.click('#details-tab');
     await page.waitForFunction(() => document.querySelector('#details-pane').classList.contains('show'));
     assert.equal(await page.locator('#details-tab').getAttribute('aria-selected'), 'true');

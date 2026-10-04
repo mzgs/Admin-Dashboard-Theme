@@ -49,6 +49,45 @@ updateActiveSection();
   all('[data-notify]').forEach(button => button.addEventListener('click', () => notify(button.dataset.notify)));
   all('[data-bs-toggle="tooltip"]').forEach(element => new bootstrap.Tooltip(element));
   all('[data-bs-toggle="popover"]').forEach(element => new bootstrap.Popover(element));
+  // Bootstrap ignores hide() during opening; finish early dismissal after shown.
+  const openingModals = new Set();
+  const hideModal = modal => {
+    const hide = () => bootstrap.Modal.getOrCreateInstance(modal).hide();
+    if (openingModals.has(modal)) modal.addEventListener('shown.bs.modal', hide, { once: true });
+    else hide();
+  };
+  all('.modal').forEach(modal => {
+    modal.addEventListener('show.bs.modal', () => openingModals.add(modal));
+    modal.addEventListener('shown.bs.modal', () => openingModals.delete(modal));
+    modal.addEventListener('click', event => {
+      const backdropDismiss = event.target === modal && modal.dataset.bsBackdrop !== 'static';
+      if (openingModals.has(modal) && (backdropDismiss || event.target.closest('[data-bs-dismiss="modal"]'))) hideModal(modal);
+    });
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') openingModals.forEach(hideModal);
+  });
+  const background = all('.workspace, .sidebar, .skip-link');
+  all('.modal, .offcanvas').forEach(overlay => {
+    const kind = overlay.classList.contains('modal') ? 'modal' : 'offcanvas';
+    overlay.addEventListener(`show.bs.${kind}`, () => background.forEach(element => { element.inert = true; }));
+    overlay.addEventListener(`shown.bs.${kind}`, () => overlay.querySelector('[data-initial-focus]')?.focus({ preventScroll: true }));
+    overlay.addEventListener(`hidden.bs.${kind}`, () => {
+      if (!find('.modal.show, .offcanvas.show, .offcanvas.showing, .offcanvas.hiding')) background.forEach(element => { element.inert = false; });
+      overlay.querySelector('form')?.reset();
+    });
+    // Wrap at the boundaries before the browser can move focus to its chrome.
+    overlay.addEventListener('keydown', event => {
+      if (event.key !== 'Tab') return;
+      const controls = [...overlay.querySelectorAll('a[href], button, input, select, textarea, [tabindex]')]
+        .filter(element => element.tabIndex >= 0 && !element.matches(':disabled') && element.getClientRects().length);
+      const first = controls[0], last = controls.at(-1);
+      if (!first || (event.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement))) || (!event.shiftKey && document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+      }
+    });
+  });
   find('#demo-range').addEventListener('input', event => { find('#range-value').textContent = `${event.target.value}%`; });
   find('#demo-check-mixed').indeterminate = true;
   let demoPage = 1;
@@ -206,7 +245,7 @@ updateActiveSection();
     transactions.unshift({ id: `INV-2026-${nextInvoice++}`, customer, email: values.get('email').trim(), amount, status: values.get('status'), date: values.get('date'), color: 'purple' });
     find('#transaction-search').value = ''; find('#transaction-status').value = 'all'; page = 0;
     renderTransactions();
-    bootstrap.Modal.getOrCreateInstance(find('#transaction-modal')).hide();
+    hideModal(find('#transaction-modal'));
     form.reset(); notify('Transaction added to your sample payments.');
   });
 
@@ -228,12 +267,12 @@ updateActiveSection();
     label.className = 'task-row';
     label.innerHTML = `<input type="checkbox" class="form-check-input"><span class="task-copy"><span>${escapeHTML(title)}</span><small>Workspace · New task</small></span><span class="initial-avatar purple">LC</span>`;
     find('#task-list').append(label); updateTasks();
-    bootstrap.Modal.getOrCreateInstance(find('#task-modal')).hide();
+    hideModal(find('#task-modal'));
     event.currentTarget.reset(); notify('Task added to your list.');
   });
   find('#reset-tasks').addEventListener('click', () => {
     all('#task-list input').forEach(input => { input.checked = false; }); updateTasks();
-    bootstrap.Modal.getOrCreateInstance(find('#reset-modal')).hide(); notify('All tasks are marked incomplete.');
+    hideModal(find('#reset-modal')); notify('All tasks are marked incomplete.');
   });
 
   const applyWorkspaceName = name => {
