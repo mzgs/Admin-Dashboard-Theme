@@ -108,3 +108,6 @@
 @media (max-width: 575px) { .dashboard-content { padding: 20px 14px; }.dashboard-heading { flex-direction: column; gap: 16px; }.dashboard-actions { justify-content: flex-start; width: 100%; }.dashboard-heading h2 { font-size: 23px; }.dashboard-actions .btn, .period-select { font-size: 11px; }.period-select { width: 126px; }.three-column-grid, .component-grid { grid-template-columns: minmax(0, 1fr); }.three-column-grid > :last-child { grid-column: auto; }.metric-value { font-size: 23px; }.metric-caption { display: none; }.metric-bottom { gap: 2px; }.sparkline { width: 52px; }.metric-card { padding: 13px; }.metric-top { font-size: 11px; }.metric-top i { font-size: 12px; }.metric-grid { gap: 10px; }.transaction-toolbar { padding: 14px 16px; }.panel-footer { padding: 12px 16px; flex-wrap: wrap; }.panel-header { gap: 8px; }.dashboard-page .workspace-footer { font-size: 10px; }.section-heading { align-items: flex-start; }.chart-legend { gap: 8px; }.chart-segment button { padding: 4px 6px; } }
 @media (max-width: 767px) { .dashboard-page .mobile-menu { display: inline-flex; } }
 @media (max-width: 575px) { .period-select { padding-left: 10px; padding-right: 26px; } }
+.dashboard-content [id] { scroll-margin-top: 20px; }
+#customers { min-width: 0; }
+#customers .table-container { border: 1px solid var(--line); border-radius: 9px; }

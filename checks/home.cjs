@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const root = process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/';
-    await page.goto(new URL('home.html', root).href);
+    await page.goto(new URL('index.html', root).href);
     await page.waitForSelector('#transaction-rows .transaction-check');
     assert.equal(await page.locator('#transaction-rows tr').count(), 6);
     assert.equal(await page.locator('.mobile-menu').isVisible(), false);
@@ -97,11 +97,28 @@ const { chromium } = require('playwright');
     await page.click('.sidebar-toggle');
     assert.equal(await page.locator('.sidebar').evaluate(element => element.clientWidth), 67);
     await page.click('.sidebar-toggle');
-    await page.click('.sidebar-nav a[href="index.html"]');
-    await page.waitForURL('**/index.html');
-    assert.equal(await page.locator('tbody tr').count(), 24);
-    await page.click('.sidebar-nav a[href="home.html"]');
-    await page.waitForURL('**/home.html');
+    for (const link of await page.locator('.sidebar-nav a').all()) {
+      const href = await link.getAttribute('href');
+      assert.ok(href.startsWith('#'));
+      assert.equal(await page.locator(href).count(), 1);
+      await link.click();
+      await page.waitForURL(url => url.hash === href);
+      await page.waitForFunction(target => document.querySelector(`.sidebar-nav a[href="${target}"]`).getAttribute('aria-current') === 'location', href);
+    }
+    await page.click('.sidebar-nav a[href="#customers"]');
+    assert.equal(await page.locator('#customers tbody tr').count(), 24);
+    assert.equal(await page.locator('#customers').evaluate(element => {
+      const scroll = document.querySelector('.dashboard-scroll').getBoundingClientRect();
+      const rect = element.getBoundingClientRect();
+      return rect.top >= scroll.top && rect.top < scroll.bottom;
+    }), true);
+    await page.reload();
+    assert.equal(await page.locator('.sidebar-nav a[href="#customers"]').getAttribute('aria-current'), 'location');
+    await page.click('.sidebar-nav a[href="#home"]');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.click('.mobile-menu');
+    await page.click('.sidebar-nav a[href="#customers"]');
+    assert.equal(await page.locator('body').evaluate(body => body.classList.contains('sidebar-mobile-open')), false);
     assert.deepEqual(errors, []);
     console.log('Dashboard browser checks passed: charts, filters, pagination, safe form rendering, export, tasks, tabs, persistence, responsive layout, and navigation.');
   } finally {

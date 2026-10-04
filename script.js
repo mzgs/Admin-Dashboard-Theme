@@ -24,3 +24,15 @@ $('.mobile-menu').addEventListener('click', event => { document.body.classList.a
 $('#main').addEventListener('click', event => { if (!event.target.closest('.mobile-menu')) closeMobileSidebar(); });
 $('.sidebar-nav').addEventListener('click', event => { if (event.target.closest('.rail-button')) closeMobileSidebar(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMobileSidebar(); });
+
+const updateActiveSection = () => {
+  const target = location.hash || '#home';
+  document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link => {
+    const active = link.getAttribute('href') === target;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  });
+};
+window.addEventListener('hashchange', updateActiveSection);
+updateActiveSection();
