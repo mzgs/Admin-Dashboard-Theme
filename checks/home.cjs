@@ -9,6 +9,24 @@ const { chromium } = require('playwright');
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const root = process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/';
+    const checkCustomerScrolling = async () => {
+      const table = page.locator('#customers .table-container');
+      await table.hover({ position: { x: 100, y: 100 } });
+      const before = await page.locator('.dashboard-scroll').evaluate(element => element.scrollTop);
+      await page.mouse.wheel(0, -200);
+      await page.waitForFunction(top => document.querySelector('.dashboard-scroll').scrollTop < top, before);
+      await page.waitForTimeout(300); // Let the wheel gesture finish before changing its target or direction.
+      await table.hover({ position: { x: 100, y: 100 } });
+      const after = await page.locator('.dashboard-scroll').evaluate(element => element.scrollTop);
+      await page.mouse.wheel(0, 200);
+      await page.waitForFunction(top => document.querySelector('.dashboard-scroll').scrollTop > top, after);
+      await page.waitForTimeout(300);
+      if (await table.evaluate(element => element.scrollWidth > element.clientWidth)) {
+        await table.hover({ position: { x: 100, y: 100 } });
+        await page.mouse.wheel(200, 0);
+        await page.waitForFunction(() => document.querySelector('#customers .table-container').scrollLeft > 0);
+      }
+    };
     await page.goto(new URL('index.html', root).href);
     await page.waitForSelector('#transaction-rows .transaction-check');
     assert.equal(await page.locator('#transaction-rows tr').count(), 6);
@@ -112,6 +130,7 @@ const { chromium } = require('playwright');
       const rect = element.getBoundingClientRect();
       return rect.top >= scroll.top && rect.top < scroll.bottom;
     }), true);
+    await checkCustomerScrolling();
     await page.reload();
     assert.equal(await page.locator('.sidebar-nav a[href="#customers"]').getAttribute('aria-current'), 'location');
     await page.click('.sidebar-nav a[href="#home"]');
@@ -119,8 +138,9 @@ const { chromium } = require('playwright');
     await page.click('.mobile-menu');
     await page.click('.sidebar-nav a[href="#customers"]');
     assert.equal(await page.locator('body').evaluate(body => body.classList.contains('sidebar-mobile-open')), false);
+    await checkCustomerScrolling();
     assert.deepEqual(errors, []);
-    console.log('Dashboard browser checks passed: charts, filters, pagination, safe form rendering, export, tasks, tabs, persistence, responsive layout, and navigation.');
+    console.log('Dashboard browser checks passed: charts, filters, pagination, safe form rendering, export, tasks, tabs, persistence, responsive layout, navigation, and customer table scrolling.');
   } finally {
     await browser.close();
   }
