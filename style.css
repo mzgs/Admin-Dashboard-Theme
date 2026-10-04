@@ -198,8 +198,8 @@ table tfoot td { position: sticky; bottom: 0; z-index: 2; background: var(--surf
 @media (max-width: 767px) { .dashboard-page .mobile-menu { display: inline-flex; } }
 @media (max-width: 575px) { .period-select { padding-left: 10px; padding-right: 26px; } }
 .dashboard-content [id] { scroll-margin-top: 20px; }
-#customers { min-width: 0; }
-#customers .table-container { border: 1px solid var(--line); border-radius: calc(var(--radius) + 4px); }
+#generic-table { min-width: 0; }
+#generic-table .table-container { border: 1px solid var(--line); border-radius: calc(var(--radius) + 4px); }
 
 .dashboard-page .btn:focus-visible, .dashboard-page .form-check-input:focus {
   outline: 2px solid var(--ring); outline-offset: 2px; box-shadow: none;

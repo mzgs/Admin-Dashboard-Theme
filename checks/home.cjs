@@ -9,8 +9,8 @@ const { chromium } = require('playwright');
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const root = process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/';
-    const checkCustomerScrolling = async () => {
-      const table = page.locator('#customers .table-container');
+    const checkTableScrolling = async () => {
+      const table = page.locator('#generic-table .table-container');
       await table.hover({ position: { x: 100, y: 100 } });
       const before = await page.locator('.dashboard-scroll').evaluate(element => element.scrollTop);
       await page.mouse.wheel(0, -200);
@@ -24,7 +24,7 @@ const { chromium } = require('playwright');
       if (await table.evaluate(element => element.scrollWidth > element.clientWidth)) {
         await table.hover({ position: { x: 100, y: 100 } });
         await page.mouse.wheel(200, 0);
-        await page.waitForFunction(() => document.querySelector('#customers .table-container').scrollLeft > 0);
+        await page.waitForFunction(() => document.querySelector('#generic-table .table-container').scrollLeft > 0);
       }
     };
     await page.goto(new URL('index.html', root).href);
@@ -123,24 +123,24 @@ const { chromium } = require('playwright');
       await page.waitForURL(url => url.hash === href);
       await page.waitForFunction(target => document.querySelector(`.sidebar-nav a[href="${target}"]`).getAttribute('aria-current') === 'location', href);
     }
-    await page.click('.sidebar-nav a[href="#customers"]');
-    assert.equal(await page.locator('#customers tbody tr').count(), 24);
-    assert.equal(await page.locator('#customers').evaluate(element => {
+    await page.click('.sidebar-nav a[href="#generic-table"]');
+    assert.equal(await page.locator('#generic-table tbody tr').count(), 24);
+    assert.equal(await page.locator('#generic-table').evaluate(element => {
       const scroll = document.querySelector('.dashboard-scroll').getBoundingClientRect();
       const rect = element.getBoundingClientRect();
       return rect.top >= scroll.top && rect.top < scroll.bottom;
     }), true);
-    await checkCustomerScrolling();
+    await checkTableScrolling();
     await page.reload();
-    assert.equal(await page.locator('.sidebar-nav a[href="#customers"]').getAttribute('aria-current'), 'location');
+    assert.equal(await page.locator('.sidebar-nav a[href="#generic-table"]').getAttribute('aria-current'), 'location');
     await page.click('.sidebar-nav a[href="#home"]');
     await page.setViewportSize({ width: 390, height: 844 });
     await page.click('.mobile-menu');
-    await page.click('.sidebar-nav a[href="#customers"]');
+    await page.click('.sidebar-nav a[href="#generic-table"]');
     assert.equal(await page.locator('body').evaluate(body => body.classList.contains('sidebar-mobile-open')), false);
-    await checkCustomerScrolling();
+    await checkTableScrolling();
     assert.deepEqual(errors, []);
-    console.log('Dashboard browser checks passed: charts, filters, pagination, safe form rendering, export, tasks, tabs, persistence, responsive layout, navigation, and customer table scrolling.');
+    console.log('Dashboard browser checks passed: charts, filters, pagination, safe form rendering, export, tasks, tabs, persistence, responsive layout, navigation, and generic table scrolling.');
   } finally {
     await browser.close();
   }

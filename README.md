@@ -1,6 +1,6 @@
 # Admin Dashboard Theme
 
-Open `index.html` for the dashboard. Home, customers, and sidebar destinations are sections in this one page, linked with `#` IDs (for example, `#home` and `#customers`).
+Open `index.html` for the dashboard. Home, Table, and sidebar destinations are sections in this one page, linked with `#` IDs (for example, `#home` and `#generic-table`).
 
 The home dashboard includes sample analytics, line/donut/bar charts, searchable and paginated transactions, CSV exports, task management, and a shadcn-inspired component showcase built with Bootstrap. Shared CSS theme tokens style neutral buttons, inputs, cards, tabs, badges, menus, and dialogs in light and dark mode. Transactions and tasks live for the current page session; theme and workspace preferences use browser storage.
 
