@@ -36,7 +36,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px s
 .sidebar-group-title { padding: 0 6px; height: 16px; align-items: center; gap: 8px; color: #737373; border: 0; background: transparent; font-size: 12px; line-height: 16px; text-align: left; }
 .sidebar-group-title i { font-size: 8px; }.sidebar-group-title[aria-expanded="false"] i { transform: rotate(-90deg); }
 .sidebar-nav .collapse:not(.show) { display: block; }
-.sidebar-bottom { height: 44px; flex-shrink: 0; padding: 8px; border-top: 1px solid var(--line); background: var(--sidebar-active); display: flex; align-items: center; gap: 4px; }
+.sidebar-bottom { height: 44px; flex-shrink: 0; padding: 8px; border-top: 1px solid var(--line); background: var(--sidebar-bg); display: flex; align-items: center; gap: 4px; }
 .profile-avatar { display: block; height: 16px; width: 16px; border-radius: 50%; background: linear-gradient(45deg, #c65cbb, #ae57d2); flex-shrink: 0; }
 .workspace-mark { display: inline-block; width: 16px; height: 16px; border-radius: 6px; background: linear-gradient(45deg, #34d399, #06b6d4); flex-shrink: 0; }
 .workspace-switcher { border: 0; color: inherit; background: transparent; border-radius: 6px; padding: 4px 6px; align-items: center; gap: 8px; font-size: 14px; min-width: 0; flex: 1; }
@@ -77,7 +77,7 @@ table .number-column { width: 60px; min-width: 60px; text-align: center; padding
 .numeric-cell { min-width: 160px; font-variant-numeric: tabular-nums; }
 .date-cell { min-width: 150px; color: var(--muted) !important; }
 table tfoot td { position: sticky; bottom: 0; z-index: 2; background: var(--surface-raised); color: var(--muted); border-top: 1px solid var(--line); border-bottom: 0; font-size: 12px; height: 44px; }
-.workspace-footer { flex-shrink: 0; min-height: 36px; padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; align-items: center; background: var(--surface-raised); color: var(--muted); font-size: 11px; line-height: 20px; border-top: 1px solid var(--line); }
+.workspace-footer { flex-shrink: 0; min-height: 44px; padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; align-items: center; background: var(--surface-raised); color: var(--muted); font-size: 11px; line-height: 20px; border-top: 1px solid var(--line); }
 .footer-status { display: inline-flex; align-items: center; gap: 6px; }
 .status-dot { width: 5px; height: 5px; flex-shrink: 0; background: #62b89a; border-radius: 50%; }
 @media (max-width: 767px) { .sidebar { display: none; }.sidebar-mobile-open .sidebar { display: flex; box-shadow: 12px 0 40px #0005; }.workspace, .sidebar-expanded .workspace { margin-left: 0; }.mobile-menu { display: block; }.topbar { padding: 0 10px; }.topbar .gap-2 { gap: 0 !important; }.workspace-footer { padding-inline: 10px; } }
