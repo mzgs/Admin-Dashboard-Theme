@@ -111,11 +111,24 @@ const { chromium } = require('playwright');
           ['.progress', 'height', '4px'],
           ['.dashboard-table th', 'height', '40px'],
           ['.dashboard-table', 'fontSize', '14px'],
+          ['.dashboard-table td', 'paddingLeft', '8px'],
+          ['.dashboard-table-wrap', 'borderRadius', '8px'],
+          ['#generic-table .table-container', 'borderRadius', '11px'],
+          ['#transactions', 'borderTopWidth', '0px'],
+          ['#transactions .panel-footer', 'backgroundColor', 'rgba(0, 0, 0, 0)'],
+          ['#transactions .panel-footer', 'borderTopWidth', '0px'],
+          ['#transactions .panel-footer', 'fontSize', '14px'],
           ['.modal-content', 'borderRadius', '12px'],
           ['.modal-footer', 'paddingTop', '16px'],
           ['.toast-body', 'fontSize', '13px']
         ]) check(document.querySelector(selector), property, expected);
-        for (const selector of ['.dashboard-panel', '.metric-card', '.modal-content', '.toast', '.dropdown-menu', '.popover']) {
+        const rowCheckbox = document.querySelector('.transaction-check');
+        rowCheckbox.checked = true;
+        check(rowCheckbox.closest('td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
+        rowCheckbox.checked = false;
+        check(rowCheckbox.closest('td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
+        for (const selector of ['#generic-table th', '#generic-table td']) check(document.querySelector(selector), 'backgroundColor', 'rgba(0, 0, 0, 0)');
+        for (const selector of ['.card', '.dashboard-panel', '.metric-card', '.modal-content', '.toast', '.dropdown-menu', '.popover']) {
           const element = document.querySelector(selector);
           if (element) check(element, 'backgroundColor', color('--surface'));
         }
@@ -199,6 +212,8 @@ const { chromium } = require('playwright');
     await page.keyboard.press('Escape');
     await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'none' });
     assert.equal(await page.locator('#transaction-rows tr').count(), 6);
+    assert.equal(await page.locator('#previous-page').textContent(), 'Previous');
+    assert.equal(await page.locator('#next-page').textContent(), 'Next');
     assert.equal(await page.locator('#home > .showcase-section').count(), 8);
     assert.equal(await page.locator('#home #generic-table').count(), 1);
     assert.equal(await page.locator('.showcase-index a').count(), 8);
