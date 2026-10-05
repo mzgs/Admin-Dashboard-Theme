@@ -23,7 +23,7 @@ a { text-decoration: none; }
 button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .skip-link { position: fixed; top: 0; left: 70px; z-index: 1100; padding: 12px; background: var(--surface-raised); }
 .sidebar { position: fixed; inset: 0 auto 0 0; width: 68px; border-right: 1px solid var(--line); display: flex; flex-direction: column; background: var(--sidebar-bg); color: var(--sidebar-ink); z-index: 1020; }
-.sidebar-header { height: 48px; flex-shrink: 0; padding: 8px 12px; display: flex; align-items: center; gap: 4px; position: relative; }
+.sidebar-header { height: 48px; flex-shrink: 0; padding: 8px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 4px; position: relative; }
 .rail-button { height: 32px; width: 32px; margin: 0 auto; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px; border: 0; border-radius: 6px; color: inherit; background: transparent; font-size: 14px; line-height: 20px; text-align: left; }
 .rail-button i { width: 16px; font-size: 16px; flex-shrink: 0; }
 .rail-button:hover { background: var(--sidebar-hover); color: var(--sidebar-highlight); }
