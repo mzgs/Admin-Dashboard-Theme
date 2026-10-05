@@ -127,7 +127,8 @@ const { chromium } = require('playwright');
         check(rowCheckbox.closest('td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
         rowCheckbox.checked = false;
         check(rowCheckbox.closest('td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
-        for (const selector of ['#generic-table th', '#generic-table td']) check(document.querySelector(selector), 'backgroundColor', 'rgba(0, 0, 0, 0)');
+        for (const selector of ['#generic-table th', '.dashboard-table th', '#generic-table tfoot td']) check(document.querySelector(selector), 'backgroundColor', color('--surface-raised'));
+        check(document.querySelector('#generic-table tbody td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
         for (const selector of ['.card', '.dashboard-panel', '.metric-card', '.modal-content', '.toast', '.dropdown-menu', '.popover']) {
           const element = document.querySelector(selector);
           if (element) check(element, 'backgroundColor', color('--surface'));
