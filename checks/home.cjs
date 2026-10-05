@@ -85,6 +85,66 @@ const { chromium } = require('playwright');
     }
     await page.evaluate(() => { setTheme('dark'); document.activeElement.blur(); });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const field = page.locator('#workspace-name');
+    const settledStyle = (element, property) => Promise.all(element.getAnimations().map(animation => animation.finished))
+      .then(() => getComputedStyle(element)[property]);
+    for (const theme of ['dark', 'light']) {
+      await page.evaluate(theme => setTheme(theme), theme);
+      const restingShadow = await field.evaluate(settledStyle, 'boxShadow');
+      await field.evaluate(element => {
+        element.transitions = [];
+        element.ontransitionrun = event => element.transitions.push(event.propertyName);
+      });
+      await field.click();
+      assert.match(await field.evaluate(settledStyle, 'boxShadow'), /3px/);
+      assert.deepEqual(await field.evaluate(element => element.transitions.filter(property => ['border-top-color', 'box-shadow'].includes(property)).sort()), ['border-top-color', 'box-shadow'], `${theme} animated focus`);
+      await field.evaluate(element => { element.transitions = []; });
+      await page.locator('#preferences-title').click();
+      assert.equal(await field.evaluate(element => element === document.activeElement), false, 'Outside click blurs input');
+      assert.equal(await field.evaluate(settledStyle, 'boxShadow'), restingShadow);
+      assert.deepEqual(await field.evaluate(element => element.transitions.filter(property => ['border-top-color', 'box-shadow'].includes(property)).sort()), ['border-top-color', 'box-shadow'], `${theme} animated blur`);
+      await page.keyboard.press('Tab');
+      for (const selector of ['#team-tab', '#demo-check-default', '#buttons .btn-primary']) {
+        const control = page.locator(selector).first();
+        await control.focus();
+        assert.match(await control.evaluate(settledStyle, 'boxShadow'), /3px/, `${theme} keyboard focus on ${selector}`);
+      }
+      await page.locator('#demo-invalid').focus();
+      assert.notEqual(await page.locator('#demo-invalid').evaluate(settledStyle, 'boxShadow'), await field.evaluate(element => {
+        element.focus();
+        return Promise.all(element.getAnimations().map(animation => animation.finished)).then(() => getComputedStyle(element).boxShadow);
+      }), 'Invalid input keeps its error ring');
+      await page.locator('#preferences-title').click();
+    }
+    await page.evaluate(() => { setTheme('dark'); document.activeElement.blur(); });
+    const toggle = page.locator('#demo-switch-off');
+    await toggle.evaluate(element => {
+      element.transitions = [];
+      element.ontransitionrun = event => element.transitions.push(event.propertyName);
+    });
+    await toggle.check();
+    assert.equal(await toggle.evaluate(settledStyle, 'backgroundPositionX'), '100%');
+    assert.ok(await toggle.evaluate(element => element.transitions.some(property => property.startsWith('background-position'))), 'Switch thumb animates');
+    await toggle.uncheck();
+    const menuTrigger = page.locator('#navigation [data-bs-toggle="dropdown"]');
+    await menuTrigger.click();
+    const menu = page.locator('#navigation .dropdown-menu');
+    assert.equal(await menu.evaluate(element => getComputedStyle(element).animationName), 'menu-enter');
+    await menu.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
+    await menuTrigger.press('ArrowDown');
+    assert.equal(await menu.locator('.dropdown-item').first().evaluate(element => element === document.activeElement), true);
+    await page.keyboard.press('Escape');
+    assert.equal(await menu.isVisible(), false);
+    assert.equal(await menuTrigger.evaluate(element => element === document.activeElement), true);
+    await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
+    await page.locator('#team-tab').focus();
+    assert.equal(await page.locator('#team-tab').evaluate(element => getComputedStyle(element).outlineWidth), '2px');
+    assert.notEqual(await page.locator('#team-tab').evaluate(element => getComputedStyle(element).outlineColor), 'rgba(0, 0, 0, 0)');
+    assert.equal(await field.evaluate(element => getComputedStyle(element).transitionDuration), '0s');
+    await menuTrigger.click();
+    assert.equal(await menu.evaluate(element => getComputedStyle(element).animationName), 'none');
+    await page.keyboard.press('Escape');
+    await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'none' });
     assert.equal(await page.locator('#transaction-rows tr').count(), 6);
     assert.equal(await page.locator('#home > .showcase-section').count(), 8);
     assert.equal(await page.locator('#home #generic-table').count(), 1);
@@ -99,6 +159,9 @@ const { chromium } = require('playwright');
     await page.click('label[for="view-grid"]');
     assert.equal(await page.locator('#view-grid').isChecked(), true);
     assert.equal(await page.locator('#view-list').isChecked(), false);
+    assert.equal(await page.locator('#demo-select').inputValue(), '');
+    await page.selectOption('#demo-select', 'engineering');
+    assert.equal(await page.locator('#demo-select').inputValue(), 'engineering');
     await page.selectOption('#demo-multiple', ['Engineering', 'Marketing']);
     assert.equal(await page.locator('#demo-multiple option:checked').count(), 2);
     await page.click('[data-bs-target="#demo-collapse"]');
@@ -251,7 +314,7 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('body').evaluate(body => body.classList.contains('sidebar-mobile-open')), false);
     await checkTableScrolling();
     assert.deepEqual(errors, []);
-    console.log('Dashboard browser checks passed: component groups, range, selections, pagination, carousel, collapse, alerts, tooltip, popover, charts, filters, transaction pagination, safe form rendering, export, tasks, tabs, persistence, theme states, responsive content, navigation, and generic table scrolling.');
+    console.log('Dashboard browser checks passed: animated focus/blur, keyboard rings, switch motion, dropdown keyboard navigation, forced colors, reduced motion, component groups, range, selections, pagination, carousel, collapse, alerts, tooltip, popover, charts, filters, transaction pagination, safe form rendering, export, tasks, tabs, persistence, theme states, responsive content, navigation, and generic table scrolling.');
   } finally {
     await browser.close();
   }
