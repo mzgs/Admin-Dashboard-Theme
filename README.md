@@ -6,6 +6,8 @@ The Bootstrap showcase includes typography, color swatches, icons, avatars, butt
 
 Serve locally with `python3 -m http.server 8000`, then visit `http://localhost:8000/index.html`. Bootstrap and Font Awesome load from the existing CDN links, so an internet connection is required.
 
+Use `--background` for the page canvas, `--surface` for element backgrounds, and `--surface-raised` for raised or hover states. Apply `bg-surface` or `bg-surface-raised` to any element; both follow the active light or dark theme. Cards, controls, tables, menus, and overlays share the surface token. The Foundations palette previews all three background colors.
+
 With Playwright available, run `node checks/home.cjs` against the local server for the browser smoke check. Set `CHROME_PATH` to use an installed Chrome executable, or `DASHBOARD_URL` to check another local server.
 
 Overlay behavior follows [Atlassian motion guidance](https://atlassian.design/foundations/motion/applying-motion) and the [WAI-ARIA modal dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/). These are this template's chosen conventions, not universal timing requirements: 100 ms control feedback, 250 ms entrances, and 200 ms exits. Dialogs use a subtle fade and 2% scale; side panels slide from and return to their edge. Bootstrap sequences a 100 ms modal backdrop fade separately, so complete modal lifecycle timings include that extra phase. Tooltip, popover, toast, and tab fades use 100 ms; expanding sections use 250 ms. Reduced motion disables animation.
