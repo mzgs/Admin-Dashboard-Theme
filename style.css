@@ -102,8 +102,6 @@ table tfoot td { position: sticky; bottom: 0; z-index: 2; background: var(--surf
 .dashboard-page .mobile-menu { display: none; }
 .btn-surface { --bs-btn-active-bg: var(--surface-raised); --bs-btn-active-color: var(--ink); --bs-btn-active-border-color: var(--line); background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
 .btn-surface:hover { background: var(--surface-raised); border-color: var(--line); color: var(--ink); }
-.btn-accent { --bs-btn-active-bg: var(--primary); --bs-btn-active-color: var(--primary-foreground); --bs-btn-active-border-color: var(--primary); background: var(--accent); color: var(--primary-foreground); border: 1px solid var(--accent); }
-.btn-accent:hover { background: color-mix(in srgb, var(--primary) 90%, var(--surface)); border-color: transparent; color: var(--primary-foreground); }
 .dashboard-page .form-control, .dashboard-page .form-select { background-color: var(--surface); border-color: var(--line); color: var(--ink); font-size: 14px; min-height: 36px; border-radius: var(--control-radius); box-shadow: var(--shadow-sm); }
 .dashboard-page .form-control::placeholder { color: var(--muted); }
 .dashboard-page .form-control:focus, .dashboard-page .form-select:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent); }
