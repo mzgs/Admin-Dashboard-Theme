@@ -41,12 +41,29 @@ const { chromium } = require('playwright');
         const check = (element, property, expected) => {
           if (getComputedStyle(element)[property] !== expected) failures.push(`${element.className}: ${property}`);
         };
+        for (const selector of ['#workspace-name', '#demo-file', '#demo-readonly', '#review-date', '#demo-time', '#demo-color', '#demo-select']) {
+          const input = document.querySelector(selector);
+          check(input, 'height', '32px');
+          check(input, 'borderRadius', '8px');
+          check(input, 'backgroundColor', color('--input-bg'));
+          check(input, 'borderTopColor', color('--input'));
+          check(input, 'boxShadow', 'none');
+        }
+        const disabledInput = document.querySelector('#demo-disabled');
+        check(disabledInput, 'opacity', '0.5');
+        check(disabledInput, 'backgroundColor', color('--input-disabled-bg'));
+        for (const selector of ['#demo-invalid', '#demo-valid']) check(document.querySelector(selector), 'backgroundImage', 'none');
+        const invalidInput = document.querySelector('#demo-invalid');
+        check(invalidInput, 'borderTopColor', color('--input-error-border'));
+        if (!getComputedStyle(invalidInput).boxShadow.includes('3px')) failures.push('Unfocused invalid input ring');
+        const fileButton = getComputedStyle(document.querySelector('#demo-file'), '::file-selector-button');
+        if (fileButton.backgroundColor !== 'rgba(0, 0, 0, 0)' || fileButton.borderTopWidth !== '0px') failures.push('Plain file button');
         for (const [selector, background, foreground, border] of [
           ['.btn-primary', '--primary', '--primary-foreground', '--primary'],
-          ['.btn-surface', '--surface', '--ink', '--line'],
+          ['.btn-surface', '--outline-bg', '--ink', '--input'],
           ['.btn-secondary', '--surface-raised', '--ink', null],
           ['.btn-ghost', null, '--ink', null],
-          ['.btn-outline-danger', null, '--negative', '--negative']
+          ['.btn-outline-danger', '--danger-bg', '--destructive', null]
         ]) {
           for (const button of document.querySelectorAll(selector)) {
             if (button.matches('.btn-check:checked + .btn')) {
@@ -68,6 +85,39 @@ const { chromium } = require('playwright');
               button.classList.remove('active');
             }
           }
+        }
+        for (const [selector, property, expected] of [
+          ['#buttons .btn-primary', 'height', '32px'],
+          ['#buttons .btn-primary', 'borderRadius', '8px'],
+          ['#buttons .btn-sm', 'height', '28px'],
+          ['#buttons .btn-lg', 'height', '36px'],
+          ['#buttons .icon-button', 'width', '32px'],
+          ['.dashboard-panel', 'borderRadius', '12px'],
+          ['.panel-header h3', 'fontSize', '16px'],
+          ['.panel-body', 'paddingLeft', '16px'],
+          ['.initial-avatar:not(.avatar-small, .avatar-large)', 'width', '32px'],
+          ['.initial-avatar', 'borderRadius', '50%'],
+          ['.avatar-small', 'width', '24px'],
+          ['.avatar-large', 'width', '40px'],
+          ['.nav-tabs', 'height', '32px'],
+          ['.nav-link', 'fontSize', '14px'],
+          ['.status-badge', 'height', '20px'],
+          ['.accordion-button', 'fontSize', '14px'],
+          ['.dropdown-item', 'paddingTop', '4px'],
+          ['.page-link', 'height', '32px'],
+          ['.example-alert', 'fontSize', '14px'],
+          ['.empty-icon', 'width', '32px'],
+          ['.example-list .list-group-item', 'borderRadius', '8px'],
+          ['.progress', 'height', '4px'],
+          ['.dashboard-table th', 'height', '40px'],
+          ['.dashboard-table', 'fontSize', '14px'],
+          ['.modal-content', 'borderRadius', '12px'],
+          ['.modal-footer', 'paddingTop', '16px'],
+          ['.toast-body', 'fontSize', '13px']
+        ]) check(document.querySelector(selector), property, expected);
+        for (const selector of ['.dashboard-panel', '.metric-card', '.modal-content', '.toast', '.dropdown-menu', '.popover']) {
+          const element = document.querySelector(selector);
+          if (element) check(element, 'backgroundColor', color('--surface'));
         }
         const accordion = document.querySelector('.accordion-button');
         const icon = getComputedStyle(accordion, '::after').backgroundImage;
@@ -114,6 +164,9 @@ const { chromium } = require('playwright');
         element.focus();
         return Promise.all(element.getAnimations().map(animation => animation.finished)).then(() => getComputedStyle(element).boxShadow);
       }), 'Invalid input keeps its error ring');
+      await page.locator('#demo-email').focus();
+      assert.equal(await page.locator('#demo-email').evaluate(settledStyle, 'boxShadow'), 'none', 'Grouped input has no separate ring');
+      assert.match(await page.locator('#demo-email').locator('..').evaluate(settledStyle, 'boxShadow'), /3px/, 'Input group shares one focus ring');
       await page.locator('#preferences-title').click();
     }
     await page.evaluate(() => { setTheme('dark'); document.activeElement.blur(); });
