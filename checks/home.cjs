@@ -29,6 +29,62 @@ const { chromium } = require('playwright');
     };
     await page.goto(new URL('index.html', root).href);
     await page.waitForSelector('#transaction-rows .transaction-check');
+    // Theme tokens must cover default, pressed, disabled, and keyboard-focus states.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    for (const theme of ['dark', 'light']) {
+      const mismatches = await page.evaluate(theme => {
+        setTheme(theme);
+        const probe = document.createElement('span');
+        document.body.append(probe);
+        const color = token => { probe.style.color = `var(${token})`; return getComputedStyle(probe).color; };
+        const failures = [];
+        const check = (element, property, expected) => {
+          if (getComputedStyle(element)[property] !== expected) failures.push(`${element.className}: ${property}`);
+        };
+        for (const [selector, background, foreground, border] of [
+          ['.btn-primary', '--primary', '--primary-foreground', '--primary'],
+          ['.btn-surface', '--surface', '--ink', '--line'],
+          ['.btn-secondary', '--surface-raised', '--ink', null],
+          ['.btn-ghost', null, '--ink', null],
+          ['.btn-outline-danger', null, '--negative', '--negative']
+        ]) {
+          for (const button of document.querySelectorAll(selector)) {
+            if (button.matches('.btn-check:checked + .btn')) {
+              check(button, 'backgroundColor', color('--primary'));
+              check(button, 'color', color('--primary-foreground'));
+              continue;
+            }
+            const disabled = button.disabled;
+            for (const state of [false, true]) {
+              button.disabled = state;
+              check(button, 'backgroundColor', background ? color(background) : 'rgba(0, 0, 0, 0)');
+              check(button, 'color', color(foreground));
+              check(button, 'borderTopColor', border ? color(border) : 'rgba(0, 0, 0, 0)');
+            }
+            button.disabled = disabled;
+            if (!disabled) {
+              button.classList.add('active');
+              check(button, 'color', color(foreground));
+              button.classList.remove('active');
+            }
+          }
+        }
+        const accordion = document.querySelector('.accordion-button');
+        const icon = getComputedStyle(accordion, '::after').backgroundImage;
+        accordion.classList.add('collapsed');
+        if (getComputedStyle(accordion, '::after').backgroundImage !== icon) failures.push('Accordion icon palette');
+        accordion.classList.remove('collapsed');
+        probe.remove();
+        return failures;
+      }, theme);
+      assert.deepEqual(mismatches, [], `${theme} component palette`);
+      await page.locator('#demo-switch-off').focus();
+      assert.doesNotMatch(await page.locator('#demo-switch-off').evaluate(element => getComputedStyle(element).backgroundImage), /86b7fe/);
+      await page.locator('#demo-range').focus();
+      assert.equal(await page.locator('#demo-range').evaluate(element => getComputedStyle(element).outlineWidth), '2px');
+    }
+    await page.evaluate(() => { setTheme('dark'); document.activeElement.blur(); });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     assert.equal(await page.locator('#transaction-rows tr').count(), 6);
     assert.equal(await page.locator('#home > .showcase-section').count(), 8);
     assert.equal(await page.locator('#home #generic-table').count(), 1);
@@ -149,8 +205,14 @@ const { chromium } = require('playwright');
     await page.click('[data-notify="Your dashboard is up to date."]');
     assert.equal(await page.locator('#toast-message').textContent(), 'Your dashboard is up to date.');
 
-    for (const width of [1440, 1024, 768, 390, 320]) {
+    for (const width of [1440, 1024, 768, 575, 390, 320]) {
       await page.setViewportSize({ width, height: 844 });
+      for (const period of ['month', 'year']) {
+        await page.selectOption('#report-period', period);
+        const overflow = await page.locator('.metric-value, .swatch-grid > div').evaluateAll(elements => elements
+          .filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent.trim()));
+        assert.deepEqual(overflow, [], `Clipped component content at ${width}px (${period})`);
+      }
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Horizontal overflow at ${width}px`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight), true, `Unexpected page overflow at ${width}px`);
       assert.equal(await page.evaluate(() => document.querySelector('.dashboard-scroll').clientHeight > 0), true);
@@ -189,7 +251,7 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('body').evaluate(body => body.classList.contains('sidebar-mobile-open')), false);
     await checkTableScrolling();
     assert.deepEqual(errors, []);
-    console.log('Dashboard browser checks passed: component groups, range, selections, pagination, carousel, collapse, alerts, tooltip, popover, charts, filters, transaction pagination, safe form rendering, export, tasks, tabs, persistence, responsive layout, navigation, and generic table scrolling.');
+    console.log('Dashboard browser checks passed: component groups, range, selections, pagination, carousel, collapse, alerts, tooltip, popover, charts, filters, transaction pagination, safe form rendering, export, tasks, tabs, persistence, theme states, responsive content, navigation, and generic table scrolling.');
   } finally {
     await browser.close();
   }
