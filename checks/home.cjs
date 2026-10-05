@@ -29,6 +29,8 @@ const { chromium } = require('playwright');
     };
     await page.goto(new URL('index.html', root).href);
     await page.waitForSelector('#transaction-rows .transaction-check');
+    // Shared component styles must work without a page wrapper.
+    await page.locator('body').evaluate(body => body.classList.remove('dashboard-page'));
     // Theme tokens must cover default, pressed, disabled, and keyboard-focus states.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const theme of ['dark', 'light']) {
@@ -103,6 +105,12 @@ const { chromium } = require('playwright');
           ['.nav-link', 'fontSize', '14px'],
           ['.status-badge', 'height', '20px'],
           ['.accordion-button', 'fontSize', '14px'],
+          ['.accordion-item', 'borderRadius', '0px'],
+          ['#demo-check-default', 'borderRadius', '4px'],
+          ['#floating-email', 'padding', '4px 10px'],
+          ['.modal-header .btn-close', 'padding', '4px'],
+          ['.offcanvas-header .btn-close', 'padding', '4px'],
+          ['.alert-dismissible .btn-close', 'padding', '4px'],
           ['.dropdown-item', 'paddingTop', '4px'],
           ['.page-link', 'height', '32px'],
           ['.example-alert', 'fontSize', '14px'],
@@ -113,7 +121,8 @@ const { chromium } = require('playwright');
           ['.dashboard-table', 'fontSize', '14px'],
           ['.dashboard-table td', 'paddingLeft', '8px'],
           ['.dashboard-table-wrap', 'borderRadius', '8px'],
-          ['#generic-table .table-container', 'borderRadius', '11px'],
+          ['.table-section', 'minWidth', '0px'],
+          ['.card > .table-container', 'borderRadius', '11px'],
           ['#transactions', 'borderTopWidth', '0px'],
           ['#transactions .panel-footer', 'backgroundColor', 'rgba(0, 0, 0, 0)'],
           ['#transactions .panel-footer', 'borderTopWidth', '0px'],
