@@ -35,7 +35,7 @@ const { chromium } = require('playwright');
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const theme of ['dark', 'light']) {
       const mismatches = await page.evaluate(theme => {
-        setTheme(theme);
+        AdminUI.setTheme(theme);
         const probe = document.createElement('span');
         document.body.append(probe);
         const color = token => { probe.style.color = `var(${token})`; return getComputedStyle(probe).color; };
@@ -156,13 +156,13 @@ const { chromium } = require('playwright');
       await page.locator('#demo-range').focus();
       assert.equal(await page.locator('#demo-range').evaluate(element => getComputedStyle(element).outlineWidth), '2px');
     }
-    await page.evaluate(() => { setTheme('dark'); document.activeElement.blur(); });
+    await page.evaluate(() => { AdminUI.setTheme('dark'); document.activeElement.blur(); });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     const field = page.locator('#workspace-name');
     const settledStyle = (element, property) => Promise.all(element.getAnimations().map(animation => animation.finished))
       .then(() => getComputedStyle(element)[property]);
     for (const theme of ['dark', 'light']) {
-      await page.evaluate(theme => setTheme(theme), theme);
+      await page.evaluate(theme => AdminUI.setTheme(theme), theme);
       const restingShadow = await field.evaluate(settledStyle, 'boxShadow');
       await field.evaluate(element => {
         element.transitions = [];
@@ -192,7 +192,7 @@ const { chromium } = require('playwright');
       assert.match(await page.locator('#demo-email').locator('..').evaluate(settledStyle, 'boxShadow'), /3px/, 'Input group shares one focus ring');
       await page.locator('#preferences-title').click();
     }
-    await page.evaluate(() => { setTheme('dark'); document.activeElement.blur(); });
+    await page.evaluate(() => { AdminUI.setTheme('dark'); document.activeElement.blur(); });
     const toggle = page.locator('#demo-switch-off');
     await toggle.evaluate(element => {
       element.transitions = [];
@@ -221,7 +221,7 @@ const { chromium } = require('playwright');
     assert.equal(await menu.evaluate(element => getComputedStyle(element).animationName), 'none');
     await page.keyboard.press('Escape');
     await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'none' });
-    assert.equal(await page.locator('#transaction-rows tr').count(), 6);
+    assert.equal(await page.locator('#transaction-rows tr:not([hidden])').count(), 6);
     assert.equal(await page.locator('#previous-page').textContent(), 'Previous');
     assert.equal(await page.locator('#next-page').textContent(), 'Next');
     assert.equal(await page.locator('#home > .showcase-section').count(), 8);
@@ -251,7 +251,7 @@ const { chromium } = require('playwright');
     await page.click('#feedback [data-bs-dismiss="alert"]');
     assert.equal(await page.locator('#feedback .alert-dismissible').count(), 0);
     await page.click('.demo-pagination [data-page="3"]');
-    assert.equal(await page.locator('#demo-page-content').textContent(), 'Example page 3 of 3');
+    assert.equal(await page.locator('#demo-page-content').textContent(), 'Page 3 of 3');
     assert.equal(await page.locator('.demo-pagination [data-page="next"]').isDisabled(), true);
     await page.click('.demo-pagination [data-page="previous"]');
     assert.equal(await page.locator('.demo-pagination [aria-current="page"]').textContent(), '2');
@@ -266,17 +266,17 @@ const { chromium } = require('playwright');
     await page.locator('#overlays [data-bs-toggle="tooltip"]').press('Tab');
     await page.waitForSelector('.tooltip', { state: 'hidden' });
     assert.equal(await page.locator('.mobile-menu').isVisible(), false);
-    await page.selectOption('#report-period', 'week');
+    await page.click('[data-report-period="week"]');
     assert.equal(await page.locator('#metric-revenue').textContent(), '$12,480.00');
     await page.click('[data-chart-metric="orders"]');
     assert.equal(await page.locator('#chart-total').textContent(), '492');
-    await page.selectOption('#report-period', 'year');
-    assert.equal(await page.locator('#chart-total').textContent(), '16,485');
+    await page.click('[data-report-period="month"]');
+    assert.equal(await page.locator('#chart-total').textContent(), '1,864');
 
     await page.selectOption('#transaction-status', 'Pending');
-    assert.equal(await page.locator('#transaction-rows tr').count(), 3);
+    assert.equal(await page.locator('#transaction-rows tr:not([hidden])').count(), 3);
     await page.fill('#transaction-search', 'Lana');
-    assert.equal(await page.locator('#transaction-rows tr').count(), 1);
+    assert.equal(await page.locator('#transaction-rows tr:not([hidden])').count(), 1);
     await page.check('#select-transactions');
     assert.equal(await page.locator('.transaction-check:checked').count(), 1);
     await page.fill('#transaction-search', 'no-matching-customer');
@@ -295,13 +295,13 @@ const { chromium } = require('playwright');
     await page.fill('#new-amount', '123.45');
     await page.click('#transaction-form [type="submit"]');
     await page.waitForSelector('#transaction-modal', { state: 'hidden' });
-    assert.equal(await page.locator('#transaction-rows tr:first-child .customer-name').textContent(), unsafeName);
+    assert.equal(await page.locator('#transaction-rows tr:not([hidden]):first-child .customer-name').textContent(), unsafeName);
     assert.equal(await page.locator('#transaction-rows img').count(), 0);
-    assert.equal(await page.locator('#transaction-rows tr:first-child .table-amount').textContent(), '$123.45');
+    assert.equal(await page.locator('#transaction-rows tr:not([hidden]):first-child .table-amount').textContent(), '$123.45');
     const [download] = await Promise.all([page.waitForEvent('download'), page.click('#export-report')]);
-    assert.equal(download.suggestedFilename(), 'evergreen-year-report.csv');
+    assert.equal(download.suggestedFilename(), 'evergreen-month-report.csv');
     const csv = await require('node:fs/promises').readFile(await download.path(), 'utf8');
-    assert.match(csv, /428640/);
+    assert.match(csv, /48290/);
 
     await page.uncheck('#task-list input:first-child');
     assert.equal(await page.locator('#task-progress').getAttribute('aria-valuenow'), '20');
@@ -348,8 +348,8 @@ const { chromium } = require('playwright');
 
     for (const width of [1440, 1024, 768, 575, 390, 320]) {
       await page.setViewportSize({ width, height: 844 });
-      for (const period of ['month', 'year']) {
-        await page.selectOption('#report-period', period);
+      for (const period of ['day', 'month']) {
+        await page.click(`[data-report-period="${period}"]`);
         const overflow = await page.locator('.metric-value, .swatch-grid > div').evaluateAll(elements => elements
           .filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent.trim()));
         assert.deepEqual(overflow, [], `Clipped component content at ${width}px (${period})`);

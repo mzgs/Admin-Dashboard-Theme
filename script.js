@@ -1,82 +1,84 @@
 'use strict';
 
-const $ = selector => document.querySelector(selector);
-const setTheme = theme => {
-  document.documentElement.dataset.bsTheme = theme;
-  const label = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
-  $('.theme-toggle').setAttribute('aria-label', label);
-  $('.theme-toggle').title = label;
-  $('.theme-toggle i').className = `fa-light fa-${theme === 'dark' ? 'sun' : 'moon'}`;
-};
-try { setTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark'); } catch { setTheme('dark'); }
-$('.theme-toggle').addEventListener('click', () => {
-  setTheme(document.documentElement.dataset.bsTheme === 'dark' ? 'light' : 'dark');
-  try { localStorage.setItem('theme', document.documentElement.dataset.bsTheme); } catch { /* Switching still works when storage is unavailable. */ }
-});
-const closeMobileSidebar = () => { document.body.classList.remove('sidebar-mobile-open'); $('.mobile-menu').setAttribute('aria-expanded', 'false'); };
-$('.sidebar-toggle').addEventListener('click', event => {
-  if (matchMedia('(max-width: 767px)').matches) { closeMobileSidebar(); return; }
-  const on = document.body.classList.toggle('sidebar-expanded');
-  event.currentTarget.setAttribute('aria-expanded', on); event.currentTarget.setAttribute('aria-label', on ? 'Collapse navigation' : 'Expand navigation'); event.currentTarget.title = on ? 'Collapse navigation' : 'Expand navigation';
-  if (!on) document.querySelectorAll('.sidebar-nav .collapse').forEach(section => bootstrap.Collapse.getOrCreateInstance(section, { toggle: false }).show());
-});
-$('.mobile-menu').addEventListener('click', event => { document.body.classList.add('sidebar-expanded'); const on = document.body.classList.toggle('sidebar-mobile-open'); event.currentTarget.setAttribute('aria-expanded', on); $('.sidebar-toggle').setAttribute('aria-expanded', 'true'); $('.sidebar-toggle').setAttribute('aria-label', 'Collapse navigation'); });
-$('#main').addEventListener('click', event => { if (!event.target.closest('.mobile-menu')) closeMobileSidebar(); });
-$('.sidebar-nav').addEventListener('click', event => { if (event.target.closest('.rail-button')) closeMobileSidebar(); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMobileSidebar(); });
-
-const updateActiveSection = () => {
-  const target = location.hash || '#home';
-  document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link => {
-    const active = link.getAttribute('href') === target;
-    link.classList.toggle('active', active);
-    if (active) link.setAttribute('aria-current', 'location');
-    else link.removeAttribute('aria-current');
-  });
-};
-window.addEventListener('hashchange', updateActiveSection);
-updateActiveSection();
-
+// Shared components only. Sample data and application actions live in demo.js.
 (() => {
-  const find = selector => document.querySelector(selector);
-  const all = selector => [...document.querySelectorAll(selector)];
-  const money = value => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-  const number = value => new Intl.NumberFormat('en-US').format(value);
-  const notify = message => {
-    find('#toast-message').textContent = message;
-    bootstrap.Toast.getOrCreateInstance(find('#dashboard-toast'), { delay: 3500 }).show();
-  };
-  all('[data-notify]').forEach(button => button.addEventListener('click', () => notify(button.dataset.notify)));
-  all('[data-bs-toggle="tooltip"]').forEach(element => new bootstrap.Tooltip(element));
-  all('[data-bs-toggle="popover"]').forEach(element => new bootstrap.Popover(element));
-  // Bootstrap ignores hide() during opening; finish early dismissal after shown.
+  const initialized = new WeakMap();
   const openingModals = new Set();
+  let nextId = 0;
+  const calendars = new WeakMap();
+  const reflowCalendars = () => document.querySelectorAll('.date-range-calendar:popover-open').forEach(calendar => calendars.get(calendar)?.());
+  window.addEventListener('resize', reflowCalendars);
+  document.addEventListener('scroll', reflowCalendars, true);
+  const identify = (element, prefix) => {
+    if (!element.id) {
+      let id;
+      do { id = `${prefix}-${++nextId}`; } while (document.getElementById(id));
+      element.id = id;
+    }
+    return element.id;
+  };
+  const asButton = element => {
+    if (element?.tagName === 'BUTTON' && !element.hasAttribute('type')) element.type = 'button';
+  };
+  const setTheme = theme => {
+    theme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.bsTheme = theme;
+    const label = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
+    document.querySelectorAll('.theme-toggle, [data-theme-toggle]').forEach(button => {
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      const icon = button.querySelector('i');
+      if (icon) icon.className = `fa-light fa-${theme === 'dark' ? 'sun' : 'moon'}`;
+    });
+  };
+  const notify = (message, target = document.querySelector('[data-ui-toast]')) => {
+    if (typeof target === 'string') target = document.getElementById(target.replace(/^#/, ''));
+    const body = target?.querySelector('.toast-body');
+    if (body) body.textContent = message;
+    if (target && window.bootstrap) bootstrap.Toast.getOrCreateInstance(target).show();
+    document.dispatchEvent(new CustomEvent('uinotify', { detail: { message, target } }));
+  };
   const hideModal = modal => {
+    if (!modal || !window.bootstrap) return;
     const hide = () => bootstrap.Modal.getOrCreateInstance(modal).hide();
     if (openingModals.has(modal)) modal.addEventListener('shown.bs.modal', hide, { once: true });
     else hide();
   };
-  all('.modal').forEach(modal => {
-    modal.addEventListener('show.bs.modal', () => openingModals.add(modal));
-    modal.addEventListener('shown.bs.modal', () => openingModals.delete(modal));
-    modal.addEventListener('click', event => {
-      const backdropDismiss = event.target === modal && modal.dataset.bsBackdrop !== 'static';
-      if (openingModals.has(modal) && (backdropDismiss || event.target.closest('[data-bs-dismiss="modal"]'))) hideModal(modal);
-    });
-  });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') openingModals.forEach(hideModal);
   });
-  const background = all('.workspace, .sidebar, .skip-link');
-  all('.modal, .offcanvas').forEach(overlay => {
+  const initOverlay = overlay => {
     const kind = overlay.classList.contains('modal') ? 'modal' : 'offcanvas';
-    overlay.addEventListener(`show.bs.${kind}`, () => background.forEach(element => { element.inert = true; }));
-    overlay.addEventListener(`shown.bs.${kind}`, () => overlay.querySelector('[data-initial-focus]')?.focus({ preventScroll: true }));
-    overlay.addEventListener(`hidden.bs.${kind}`, () => {
-      if (!find('.modal.show, .offcanvas.show, .offcanvas.showing, .offcanvas.hiding')) background.forEach(element => { element.inert = false; });
-      overlay.querySelector('form')?.reset();
+    let background = new Map(), trigger;
+    overlay.addEventListener(`show.bs.${kind}`, () => {
+      if (kind === 'modal') openingModals.add(overlay);
+      trigger = document.activeElement;
+      background = new Map();
+      // Inert siblings at each level so dialogs also work inside ordinary page layouts.
+      for (let branch = overlay; branch && branch !== document.body; branch = branch.parentElement) {
+        for (const element of branch.parentElement?.children || []) {
+          if (element === branch || element.matches('script, style, .modal-backdrop, .offcanvas-backdrop')) continue;
+          background.set(element, element.inert);
+          element.inert = true;
+        }
+      }
     });
-    // Wrap at the boundaries before the browser can move focus to its chrome.
+    overlay.addEventListener(`shown.bs.${kind}`, () => {
+      openingModals.delete(overlay);
+      const focus = overlay.querySelector('[data-initial-focus]') || overlay.querySelector('form input:not(:disabled), form select:not(:disabled), form textarea:not(:disabled)') || overlay.querySelector('.modal-title, .offcanvas-title');
+      if (focus && !focus.matches('input, select, textarea, button, a[href], [tabindex]')) focus.tabIndex = -1;
+      focus?.focus({ preventScroll: true });
+    });
+    overlay.addEventListener(`hidden.bs.${kind}`, () => {
+      background.forEach((inert, element) => { element.inert = inert; });
+      background.clear();
+      if (overlay.hasAttribute('data-reset-on-close')) overlay.querySelectorAll('form').forEach(form => form.reset());
+      if (trigger?.isConnected && !trigger.closest('[inert]')) trigger.focus({ preventScroll: true });
+    });
+    if (kind === 'modal') overlay.addEventListener('click', event => {
+      const backdropDismiss = event.target === overlay && overlay.dataset.bsBackdrop !== 'static';
+      if (openingModals.has(overlay) && (backdropDismiss || event.target.closest('[data-bs-dismiss="modal"]'))) hideModal(overlay);
+    });
     overlay.addEventListener('keydown', event => {
       if (event.key !== 'Tab') return;
       const controls = [...overlay.querySelectorAll('a[href], button, input, select, textarea, [tabindex]')]
@@ -87,217 +89,362 @@ updateActiveSection();
         (event.shiftKey ? last : first)?.focus();
       }
     });
-  });
-  find('#demo-range').addEventListener('input', event => { find('#range-value').textContent = `${event.target.value}%`; });
-  find('#demo-check-mixed').indeterminate = true;
-  let demoPage = 1;
-  find('.demo-pagination').addEventListener('click', event => {
-    const button = event.target.closest('[data-page]');
-    if (!button) return;
-    demoPage = Math.max(1, Math.min(3, button.dataset.page === 'next' ? demoPage + 1 : button.dataset.page === 'previous' ? demoPage - 1 : Number(button.dataset.page)));
-    all('.demo-pagination [data-page]').forEach(item => {
-      const active = Number(item.dataset.page) === demoPage;
-      item.parentElement.classList.toggle('active', active);
-      if (active) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
-      item.disabled = (item.dataset.page === 'previous' && demoPage === 1) || (item.dataset.page === 'next' && demoPage === 3);
-      item.parentElement.classList.toggle('disabled', item.disabled);
+  };
+  const initSidebar = layout => {
+    const sidebar = layout.querySelector('.sidebar');
+    if (!sidebar) return;
+    const mobile = layout.querySelector('.mobile-menu');
+    const toggle = sidebar.querySelector('.sidebar-toggle');
+    asButton(mobile); asButton(toggle);
+    const close = () => { layout.classList.remove('sidebar-mobile-open'); mobile?.setAttribute('aria-expanded', 'false'); };
+    toggle?.addEventListener('click', () => {
+      if (matchMedia('(max-width: 767px)').matches) { close(); return; }
+      const expanded = layout.classList.toggle('sidebar-expanded');
+      toggle.setAttribute('aria-expanded', String(expanded));
+      toggle.setAttribute('aria-label', expanded ? 'Collapse navigation' : 'Expand navigation');
+      toggle.title = expanded ? 'Collapse navigation' : 'Expand navigation';
+      if (!expanded && window.bootstrap) sidebar.querySelectorAll('.collapse').forEach(section => bootstrap.Collapse.getOrCreateInstance(section, { toggle: false }).show());
     });
-    find('#demo-page-content').textContent = `Example page ${demoPage} of 3`;
-  });
-
-  const periods = {
-    month: { label: 'September 2026', cadence: 'Daily', revenue: 48290, customers: 2420, orders: 1864, conversion: '3.62%', revenueTrend: '12.8%', customerTrend: '8.2%', orderTrend: '6.4%', conversionTrend: '0.4 pp', labels: ['Sep 1', 'Sep 6', 'Sep 11', 'Sep 16', 'Sep 21', 'Sep 26', 'Sep 30'], points: [26, 36, 32, 47, 40, 55, 51, 64, 48, 62, 56, 73, 67, 82, 75, 90, 84, 96], previous: [22, 28, 25, 38, 34, 42, 39, 47, 43, 50, 45, 57, 51, 59, 54, 68, 60, 71] },
-    week: { label: 'Sep 28 – Oct 4, 2026', cadence: 'Daily', revenue: 12480, customers: 684, orders: 492, conversion: '3.84%', revenueTrend: '9.4%', customerTrend: '5.6%', orderTrend: '7.1%', conversionTrend: '0.2 pp', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], points: [36, 49, 40, 63, 58, 78, 86], previous: [28, 38, 33, 49, 43, 63, 71] },
-    year: { label: 'Jan – Oct 2026', cadence: 'Monthly', revenue: 428640, customers: 18920, orders: 16485, conversion: '3.48%', revenueTrend: '21.6%', customerTrend: '16.3%', orderTrend: '14.8%', conversionTrend: '0.1 pp', labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Oct'], points: [21, 31, 29, 44, 51, 46, 67, 73, 82, 96], previous: [17, 24, 23, 33, 39, 37, 49, 55, 60, 70] }
-  };
-  let chartMetric = 'revenue';
-  const drawChart = () => {
-    const data = periods[find('#report-period').value];
-    const orders = chartMetric === 'orders';
-    const maximum = orders ? (data.orders > 10000 ? 2500 : data.orders > 1000 ? 150 : 100) : (data.revenue > 100000 ? 60000 : 4000);
-    const coords = points => points.map((point, index) => `${48 + index * 574 / (points.length - 1)},${192 - point * 1.65}`);
-    const current = coords(data.points);
-    find('#chart-current').setAttribute('d', `M${current.join(' L')}`);
-    find('#chart-area').setAttribute('d', `M48,192 L${current.join(' L')} L622,192 Z`);
-    find('#chart-previous').setAttribute('d', `M${coords(data.previous).join(' L')}`);
-    find('#chart-grid').innerHTML = Array.from({ length: 5 }, (_, index) => {
-      const y = 27 + index * 41.25;
-      const value = maximum * (4 - index) / 4;
-      const label = orders ? number(Math.round(value)) : value ? `$${value / 1000}k` : '$0';
-      return `<line class="chart-grid" x1="48" x2="622" y1="${y}" y2="${y}"/><text class="chart-axis" x="0" y="${y + 4}">${label}</text>`;
-    }).join('');
-    find('#chart-labels').innerHTML = data.labels.map((label, index) => `<text class="chart-axis" x="${48 + index * 574 / (data.labels.length - 1)}" y="222" text-anchor="${index === 0 ? 'start' : index === data.labels.length - 1 ? 'end' : 'middle'}">${label}</text>`).join('');
-    find('#chart-total').textContent = orders ? number(data.orders) : money(data.revenue);
-    find('#chart-trend').textContent = `↗ ${orders ? data.orderTrend : data.revenueTrend}`;
-    find('#revenue-subtitle').textContent = `${data.cadence} ${chartMetric} · ${data.label}`;
-    find('#chart-title').textContent = `${orders ? 'Orders' : 'Revenue'} comparison · ${data.label}`;
-    find('#chart-description').textContent = `Sample ${chartMetric} for ${data.label}, trending ${orders ? data.orderTrend : data.revenueTrend} above the previous period.`;
-    all('[data-chart-metric]').forEach(button => button.setAttribute('aria-pressed', button.dataset.chartMetric === chartMetric));
-  };
-  const updateMetrics = () => {
-    const data = periods[find('#report-period').value];
-    find('#metric-revenue').textContent = money(data.revenue);
-    find('#metric-customers').textContent = number(data.customers);
-    find('#metric-orders').textContent = number(data.orders);
-    find('#metric-conversion').textContent = data.conversion;
-    find('#channel-total').textContent = number(data.customers);
-    ['revenue', 'customers', 'orders'].forEach((key, index) => {
-      find(`#trend-${key}`).textContent = `↗ ${data[['revenueTrend', 'customerTrend', 'orderTrend'][index]]}`;
+    mobile?.addEventListener('click', () => {
+      layout.classList.add('sidebar-expanded');
+      mobile.setAttribute('aria-expanded', String(layout.classList.toggle('sidebar-mobile-open')));
+      toggle?.setAttribute('aria-expanded', 'true');
+      toggle?.setAttribute('aria-label', 'Collapse navigation');
     });
-    find('#trend-conversion').textContent = `↘ ${data.conversionTrend}`;
-    all('[data-sparkline]').forEach((svg, index) => {
-      const values = (index === 3 ? [...data.previous].reverse() : data.points).filter((_, point) => point % 2 === 0);
-      const points = values.map((value, point) => `${point * 80 / (values.length - 1)},${29 - value * .26}`).join(' ');
-      svg.innerHTML = `<polyline points="${points}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
+    layout.querySelector('.workspace')?.addEventListener('click', event => { if (!event.target.closest('.mobile-menu')) close(); });
+    sidebar.addEventListener('click', event => { if (event.target.closest('a[href]')) close(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+    const links = [...sidebar.querySelectorAll('a[href^="#"]')];
+    const update = () => {
+      const target = location.hash || links[0]?.getAttribute('href');
+      links.forEach(link => {
+        const active = link.getAttribute('href') === target;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current');
+      });
+    };
+    window.addEventListener('hashchange', update);
+    update();
+  };
+  const initPagination = root => {
+    const buttons = [...root.querySelectorAll('[data-page]')];
+    buttons.forEach(asButton);
+    const total = Math.max(1, ...buttons.map(button => Number(button.dataset.page) || 0));
+    let page = Number(root.querySelector('[aria-current="page"]')?.dataset.page) || 1;
+    const update = () => {
+      const output = root.querySelector('[data-page-output]');
+      if (output) output.textContent = `Page ${page} of ${total}`;
+      buttons.forEach(button => {
+        const active = Number(button.dataset.page) === page;
+        button.parentElement.classList.toggle('active', active);
+        if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+        button.disabled = (button.dataset.page === 'previous' && page === 1) || (button.dataset.page === 'next' && page === total);
+        button.parentElement.classList.toggle('disabled', button.disabled);
+      });
+    };
+    root.addEventListener('click', event => {
+      const button = event.target.closest('[data-page]');
+      if (!button || !root.contains(button) || button.disabled) return;
+      const value = button.dataset.page;
+      page = Math.max(1, Math.min(total, value === 'next' ? page + 1 : value === 'previous' ? page - 1 : Number(value) || page));
+      update();
+      root.dispatchEvent(new CustomEvent('pagechange', { bubbles: true, detail: { page, total } }));
     });
-    drawChart();
+    update();
   };
-  find('#report-period').addEventListener('change', updateMetrics);
-  all('[data-chart-metric]').forEach(button => button.addEventListener('click', () => { chartMetric = button.dataset.chartMetric; drawChart(); }));
-  updateMetrics();
-
-  const transactions = [
-    { id: 'INV-2026-1048', customer: 'Olivia Rhye', email: 'olivia@acme.com', amount: 1250, status: 'Paid', date: '2026-10-04', color: 'purple' },
-    { id: 'INV-2026-1047', customer: 'Phoenix Baker', email: 'phoenix@layers.com', amount: 840, status: 'Paid', date: '2026-10-04', color: 'blue' },
-    { id: 'INV-2026-1046', customer: 'Lana Steiner', email: 'lana@sisyphus.com', amount: 2100, status: 'Pending', date: '2026-10-03', color: 'green' },
-    { id: 'INV-2026-1045', customer: 'Demi Wilkinson', email: 'demi@catalog.com', amount: 650, status: 'Paid', date: '2026-10-03', color: 'coral' },
-    { id: 'INV-2026-1044', customer: 'Drew Cano', email: 'drew@circooles.com', amount: 420, status: 'Failed', date: '2026-10-02', color: 'amber' },
-    { id: 'INV-2026-1043', customer: 'Natali Craig', email: 'natali@hourglass.com', amount: 1890, status: 'Paid', date: '2026-10-02', color: 'cyan' },
-    { id: 'INV-2026-1042', customer: 'Orlando Diggs', email: 'orlando@command.com', amount: 720, status: 'Pending', date: '2026-10-01', color: 'purple' },
-    { id: 'INV-2026-1041', customer: 'Andi Lane', email: 'andi@quotient.com', amount: 3100, status: 'Paid', date: '2026-10-01', color: 'blue' },
-    { id: 'INV-2026-1040', customer: 'Kate Morrison', email: 'kate@focal.com', amount: 960, status: 'Paid', date: '2026-09-30', color: 'green' },
-    { id: 'INV-2026-1039', customer: 'James Davis', email: 'james@global.co', amount: 560, status: 'Pending', date: '2026-09-30', color: 'amber' },
-    { id: 'INV-2026-1038', customer: 'Ava Kim', email: 'ava@pioneer.co', amount: 1480, status: 'Paid', date: '2026-09-29', color: 'coral' },
-    { id: 'INV-2026-1037', customer: 'Mia Smith', email: 'mia@apex.co', amount: 340, status: 'Failed', date: '2026-09-29', color: 'cyan' }
-  ];
-  const selected = new Set();
-  const pageSize = 6;
-  let page = 0;
-  let nextInvoice = 1049;
-  const filteredTransactions = () => {
-    const query = find('#transaction-search').value.trim().toLowerCase();
-    const status = find('#transaction-status').value;
-    return transactions.filter(row => (status === 'all' || row.status === status) && `${row.customer} ${row.email} ${row.id}`.toLowerCase().includes(query));
+  const initSegment = root => {
+    const buttons = [...root.querySelectorAll('[data-value]')];
+    buttons.forEach(asButton);
+    const select = button => {
+      buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      root.dispatchEvent(new CustomEvent('segmentchange', { bubbles: true, detail: { value: button.dataset.value } }));
+    };
+    root.addEventListener('click', event => {
+      const button = event.target.closest('[data-value]');
+      if (buttons.includes(button) && !button.disabled) select(button);
+    });
+    root.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      const enabled = buttons.filter(button => !button.disabled), index = enabled.indexOf(event.target);
+      if (index < 0) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? enabled[0] : event.key === 'End' ? enabled.at(-1) : enabled[(index + (event.key === 'ArrowLeft' ? -1 : 1) + enabled.length) % enabled.length];
+      next.focus(); select(next);
+    });
   };
-  const escapeHTML = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
-  const visibleTransactions = () => filteredTransactions().slice(page * pageSize, (page + 1) * pageSize);
-  const updateSelection = () => {
-    const rows = visibleTransactions();
-    const count = rows.filter(row => selected.has(row.id)).length;
-    find('#select-transactions').checked = rows.length > 0 && count === rows.length;
-    find('#select-transactions').indeterminate = count > 0 && count < rows.length;
-    find('#select-transactions').disabled = rows.length === 0;
-    const total = filteredTransactions().length;
-    find('#transaction-count').textContent = `${total ? page * pageSize + 1 : 0}–${Math.min((page + 1) * pageSize, total)} of ${total} transactions${selected.size ? ` · ${selected.size} selected` : ''}`;
+  const makeCalendar = (root, trigger) => {
+    const calendar = document.createElement('div');
+    calendar.className = 'date-range-calendar';
+    calendar.setAttribute('popover', 'auto');
+    calendar.setAttribute('role', 'dialog');
+    calendar.setAttribute('aria-label', 'Select custom date range');
+    calendar.innerHTML = '<p class="visually-hidden" data-calendar-help>Choose a start and end date. Use arrow keys to move by day, Page Up and Page Down to move by month, and Escape to close.</p><div class="date-range-caption"><button type="button" class="btn btn-ghost icon-button" data-calendar-month="-1" aria-label="Go to the Previous Month">‹</button><span data-calendar-caption aria-live="polite"></span><button type="button" class="btn btn-ghost icon-button" data-calendar-month="1" aria-label="Go to the Next Month">›</button></div><table class="date-range-grid" role="grid"><thead><tr><th scope="col" abbr="Sunday">Su</th><th scope="col" abbr="Monday">Mo</th><th scope="col" abbr="Tuesday">Tu</th><th scope="col" abbr="Wednesday">We</th><th scope="col" abbr="Thursday">Th</th><th scope="col" abbr="Friday">Fr</th><th scope="col" abbr="Saturday">Sa</th></tr></thead><tbody></tbody></table>';
+    root.append(calendar);
+    trigger.setAttribute('popovertarget', identify(calendar, 'ui-calendar'));
+    trigger.setAttribute('aria-controls', calendar.id);
+    trigger.setAttribute('aria-haspopup', 'dialog');
+    trigger.setAttribute('aria-expanded', 'false');
+    calendar.setAttribute('aria-describedby', identify(calendar.querySelector('[data-calendar-help]'), 'ui-calendar-help'));
+    calendar.querySelector('table').setAttribute('aria-labelledby', identify(calendar.querySelector('[data-calendar-caption]'), 'ui-calendar-caption'));
+    return calendar;
   };
-  const renderTransactions = () => {
-    const total = filteredTransactions().length;
-    const pageCount = Math.max(1, Math.ceil(total / pageSize));
-    page = Math.min(page, pageCount - 1);
-    find('#transaction-rows').innerHTML = visibleTransactions().map(row => {
-      const initials = row.customer.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('');
-      const date = new Date(`${row.date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      return `<tr><td><input type="checkbox" class="form-check-input transaction-check" data-id="${row.id}" aria-label="Select ${escapeHTML(row.id)}" ${selected.has(row.id) ? 'checked' : ''}></td><td><div class="label-cell"><span class="initial-avatar ${row.color}" aria-hidden="true">${escapeHTML(initials)}</span><span><span class="customer-name">${escapeHTML(row.customer)}</span><span class="customer-email">${escapeHTML(row.email)}</span></span></div></td><td class="text-body-secondary">${row.id}</td><td><span class="status-badge ${row.status === 'Paid' ? '' : row.status.toLowerCase()}">${row.status}</span></td><td class="table-amount">${money(row.amount)}</td><td class="text-body-secondary">${date}</td></tr>`;
-    }).join('') || '<tr><td colspan="6" class="empty-state">No transactions match your filters.</td></tr>';
-    find('#page-label').textContent = `${page + 1} / ${pageCount}`;
-    find('#previous-page').disabled = page === 0;
-    find('#next-page').disabled = page >= pageCount - 1;
-    updateSelection();
-  };
-  ['#transaction-search', '#transaction-status'].forEach(selector => find(selector).addEventListener(selector.includes('search') ? 'input' : 'change', () => { page = 0; renderTransactions(); }));
-  find('#previous-page').addEventListener('click', () => { page--; renderTransactions(); });
-  find('#next-page').addEventListener('click', () => { page++; renderTransactions(); });
-  find('#transaction-rows').addEventListener('change', event => {
-    const input = event.target.closest('.transaction-check');
-    if (!input) return;
-    if (input.checked) selected.add(input.dataset.id); else selected.delete(input.dataset.id);
-    updateSelection();
-  });
-  find('#select-transactions').addEventListener('change', event => {
-    visibleTransactions().forEach(row => { if (event.target.checked) selected.add(row.id); else selected.delete(row.id); });
-    renderTransactions();
-  });
-  renderTransactions();
-
-  const downloadCSV = (filename, rows) => {
-    // Prefix formula-like text so user-entered names remain text in spreadsheet apps.
-    const csv = rows.map(row => row.map(value => `"${String(value).replace(/^([\s]*[=+@-])/, "'$1").replace(/"/g, '""')}"`).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' }));
-    const link = document.createElement('a');
-    link.href = url; link.download = filename; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    notify('Your CSV report has been downloaded.');
-  };
-  const exportReport = () => {
-    const data = periods[find('#report-period').value];
-    downloadCSV(`evergreen-${find('#report-period').value}-report.csv`, [['Period', 'Metric', 'Value'], [data.label, 'Total revenue (USD)', data.revenue], [data.label, 'Active customers', data.customers], [data.label, 'Total orders', data.orders], [data.label, 'Conversion rate', data.conversion]]);
-  };
-  find('#export-report').addEventListener('click', exportReport);
-  find('#quick-export').addEventListener('click', exportReport);
-  find('#export-transactions').addEventListener('click', () => downloadCSV('evergreen-transactions.csv', [['Invoice', 'Customer', 'Email', 'Amount (USD)', 'Status', 'Date'], ...filteredTransactions().map(row => [row.id, row.customer, row.email, row.amount, row.status, row.date])]));
-  find('#transaction-form').addEventListener('submit', event => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const values = new FormData(form);
-    const customer = values.get('customer').trim();
-    const amount = Number(values.get('amount'));
-    if (!customer || !Number.isFinite(amount) || amount <= 0 || !form.reportValidity()) return;
-    transactions.unshift({ id: `INV-2026-${nextInvoice++}`, customer, email: values.get('email').trim(), amount, status: values.get('status'), date: values.get('date'), color: 'purple' });
-    find('#transaction-search').value = ''; find('#transaction-status').value = 'all'; page = 0;
-    renderTransactions();
-    hideModal(find('#transaction-modal'));
-    form.reset(); notify('Transaction added to your sample payments.');
-  });
-
-  const updateTasks = () => {
-    const tasks = all('#task-list input');
-    const completed = tasks.filter(input => input.checked).length;
-    const percentage = Math.round(completed / tasks.length * 100);
-    find('#task-count').textContent = `${completed} / ${tasks.length}`;
-    find('#task-percentage').textContent = `${percentage}%`;
-    find('#task-progress').setAttribute('aria-valuenow', percentage);
-    find('#task-progress .progress-bar').style.width = `${percentage}%`;
-  };
-  find('#task-list').addEventListener('change', updateTasks);
-  find('#task-form').addEventListener('submit', event => {
-    event.preventDefault();
-    const title = find('#new-task').value.trim();
-    if (!title || !event.currentTarget.reportValidity()) return;
-    const label = document.createElement('label');
-    label.className = 'task-row';
-    label.innerHTML = `<input type="checkbox" class="form-check-input"><span class="task-copy"><span>${escapeHTML(title)}</span><small>Workspace · New task</small></span><span class="initial-avatar purple">LC</span>`;
-    find('#task-list').append(label); updateTasks();
-    hideModal(find('#task-modal'));
-    event.currentTarget.reset(); notify('Task added to your list.');
-  });
-  find('#reset-tasks').addEventListener('click', () => {
-    all('#task-list input').forEach(input => { input.checked = false; }); updateTasks();
-    hideModal(find('#reset-modal')); notify('All tasks are marked incomplete.');
-  });
-
-  const applyWorkspaceName = name => {
-    find('.workspace-switcher > span:nth-child(2)').textContent = name;
-  };
-  try {
-    const preferences = JSON.parse(localStorage.getItem('evergreen-preferences'));
-    if (preferences && typeof preferences.workspace === 'string' && preferences.workspace.trim()) {
-      find('#workspace-name').value = preferences.workspace;
-      find('#digest-frequency').value = preferences.digest;
-      find('#review-date').value = preferences.date;
-      find('#email-notifications').checked = preferences.email === true;
-      find('#weekly-report').checked = preferences.report === true;
-      applyWorkspaceName(preferences.workspace);
+  const initDateRange = root => {
+    const find = selector => root.querySelector(selector);
+    const all = selector => [...root.querySelectorAll(selector)];
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    const dateKey = date => `${String(date.getFullYear()).padStart(4, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const readDate = value => new Date(`${value}T12:00:00`);
+    const shiftDate = (date, days) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days, 12);
+    const dateLabel = date => date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const rangeLabel = (start, end) => `${dateLabel(start)} - ${dateLabel(end)}`;
+    const trigger = find('.date-range-trigger');
+    if (!trigger) return;
+    asButton(trigger);
+    all('[data-report-period]').forEach(asButton);
+    const visibleLabel = trigger.querySelector('[data-date-label]');
+    const placeholder = visibleLabel?.textContent || 'Choose dates';
+    const calendar = makeCalendar(root, trigger);
+    const startInput = find('[data-date-start]'), endInput = find('[data-date-end]');
+    const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '') && dateKey(readDate(value)) === value;
+    let rangeStart = validDate(startInput?.value) ? startInput.value : undefined;
+    let rangeEnd = validDate(endInput?.value) ? endInput.value : rangeStart;
+    if (rangeStart && rangeEnd < rangeStart) [rangeStart, rangeEnd] = [rangeEnd, rangeStart];
+    let calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1, 12);
+    let calendarFocus = dateKey(today);
+    const positionCalendar = () => {
+      const rect = trigger.getBoundingClientRect();
+      calendar.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - calendar.offsetWidth - 8))}px`;
+      calendar.style.top = `${Math.max(8, rect.bottom + calendar.offsetHeight + 4 <= innerHeight ? rect.bottom + 4 : rect.top - calendar.offsetHeight - 4)}px`;
+    };
+    const renderCalendar = (focus = false) => {
+      calendar.querySelector('[data-calendar-caption]').textContent = calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const first = shiftDate(calendarMonth, -calendarMonth.getDay());
+      const days = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate();
+      const weeks = Math.ceil((calendarMonth.getDay() + days) / 7);
+      calendar.querySelector('tbody').innerHTML = Array.from({ length: weeks }, (_, week) => `<tr>${Array.from({ length: 7 }, (_, day) => {
+        const date = shiftDate(first, week * 7 + day), key = dateKey(date);
+        const selected = !!rangeStart && key >= rangeStart && key <= rangeEnd;
+        const start = key === rangeStart, end = key === rangeEnd;
+        const isToday = key === dateKey(today);
+        const classes = [selected ? 'in-range' : '', start ? 'range-start' : '', end ? 'range-end' : '', date.getMonth() !== calendarMonth.getMonth() ? 'outside-month' : ''].join(' ');
+        return `<td class="${classes}" aria-selected="${selected}"><button type="button" data-calendar-date="${key}" tabindex="${key === calendarFocus ? 0 : -1}" ${isToday ? 'aria-current="date"' : ''} aria-label="${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}">${date.getDate()}</button></td>`;
+      }).join('')}</tr>`).join('');
+      if (focus) calendar.querySelector(`[data-calendar-date="${calendarFocus}"]`)?.focus();
+      if (calendar.matches(':popover-open')) positionCalendar();
+    };
+    const commit = (preset = null) => {
+      const custom = !preset && !!rangeStart;
+      const start = preset ? dateKey(shiftDate(today, { day: 0, week: -6, month: -29 }[preset])) : rangeStart || null;
+      const end = preset ? dateKey(today) : rangeEnd || null;
+      const label = start ? preset === 'day' ? `Last 24 hours · ${dateLabel(today)}` : rangeLabel(readDate(start), readDate(end)) : 'Custom range cleared';
+      all('[data-report-period]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.reportPeriod === preset)));
+      if (visibleLabel) visibleLabel.textContent = start ? label : placeholder;
+      trigger.setAttribute('aria-label', visibleLabel ? start ? label : placeholder : custom ? label : 'Select custom range');
+      trigger.title = custom ? label : 'Select custom range';
+      const dot = find('.date-range-dot');
+      if (dot) dot.hidden = !custom;
+      const status = find('[data-date-status]');
+      if (status) status.textContent = label;
+      if (startInput) startInput.value = start || '';
+      if (endInput) endInput.value = end || '';
+      root.dispatchEvent(new CustomEvent('datechange', { bubbles: true, detail: { start, end, preset, label } }));
+    };
+    const setPreset = period => {
+      if (!['day', 'week', 'month'].includes(period)) return;
+      rangeStart = rangeEnd = undefined;
+      calendar.hidePopover();
+      commit(period);
+    };
+    all('[data-report-period]').forEach(button => button.addEventListener('click', () => setPreset(button.dataset.reportPeriod)));
+    calendar.addEventListener('toggle', event => {
+      const open = event.newState === 'open';
+      trigger.setAttribute('aria-expanded', String(open));
+      if (open) {
+        const date = rangeStart ? readDate(rangeStart) : today;
+        calendarMonth = new Date(date.getFullYear(), date.getMonth(), 1, 12);
+        calendarFocus = dateKey(date);
+        renderCalendar();
+        calendar.querySelector('[data-calendar-month="-1"]').focus();
+      }
+    });
+    calendar.addEventListener('click', event => {
+      const month = event.target.closest('[data-calendar-month]');
+      if (month) {
+        calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + Number(month.dataset.calendarMonth), 1, 12);
+        calendarFocus = dateKey(calendarMonth);
+        renderCalendar();
+        return;
+      }
+      const button = event.target.closest('[data-calendar-date]');
+      if (!button) return;
+      const key = button.dataset.calendarDate;
+      if (key === rangeStart && key === rangeEnd) {
+        rangeStart = rangeEnd = undefined;
+        commit();
+        renderCalendar(true);
+        return;
+      }
+      if (!rangeStart || key === rangeEnd) rangeStart = rangeEnd = key;
+      else if (key < rangeStart) rangeStart = key;
+      else rangeEnd = key;
+      calendarFocus = key;
+      commit();
+      renderCalendar(true);
+    });
+    calendar.addEventListener('keydown', event => {
+      const button = event.target.closest('[data-calendar-date]');
+      if (!button) return;
+      const date = readDate(button.dataset.calendarDate);
+      const offsets = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7, Home: -date.getDay(), End: 6 - date.getDay() };
+      let next;
+      if (event.key in offsets) next = shiftDate(date, offsets[event.key]);
+      else if (event.key === 'PageUp' || event.key === 'PageDown') {
+        next = new Date(date.getFullYear(), date.getMonth() + (event.key === 'PageUp' ? -1 : 1), 1, 12);
+        next.setDate(Math.min(date.getDate(), new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
+      } else return;
+      event.preventDefault();
+      calendarFocus = dateKey(next);
+      calendarMonth = new Date(next.getFullYear(), next.getMonth(), 1, 12);
+      renderCalendar(true);
+    });
+    calendars.set(calendar, () => {
+      const rect = trigger.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > innerHeight) calendar.hidePopover();
+      else positionCalendar();
+    });
+    if (rangeStart) commit();
+    else {
+      const preset = root.dataset.datePreset || find('[data-report-period][aria-pressed="true"]')?.dataset.reportPeriod;
+      if (preset) setPreset(preset); else commit();
     }
-  } catch { /* Default preferences remain usable when browser storage is unavailable. */ }
-  find('#preferences-form').addEventListener('submit', event => {
-    event.preventDefault();
-    const workspace = find('#workspace-name').value.trim();
-    if (!workspace || !event.currentTarget.reportValidity()) return;
-    applyWorkspaceName(workspace);
-    const preferences = { workspace, digest: find('#digest-frequency').value, date: find('#review-date').value, email: find('#email-notifications').checked, report: find('#weekly-report').checked };
-    let message = 'Workspace preferences saved on this browser.';
-    try { localStorage.setItem('evergreen-preferences', JSON.stringify(preferences)); } catch { message = 'Preferences applied for this session. Browser storage is unavailable.'; }
-    find('#preferences-status').textContent = message;
-    notify(message);
-  });
+
+
+  };
+  const initTable = root => {
+    const table = root.querySelector('table'), body = table?.tBodies[0];
+    if (!body) return;
+    const search = root.querySelector('[data-table-search]');
+    const filters = [...root.querySelectorAll('[data-table-filter]')];
+    const selectAll = root.querySelector('[data-table-select-all]');
+    const previous = root.querySelector('[data-table-page="previous"]'), next = root.querySelector('[data-table-page="next"]');
+    const requestedSize = Number(root.dataset.tablePageSize);
+    asButton(previous); asButton(next);
+    const size = Number.isSafeInteger(requestedSize) && requestedSize > 0 ? requestedSize : Number.MAX_SAFE_INTEGER;
+    let page = 0;
+    const empty = document.createElement('tr');
+    empty.setAttribute('data-table-empty', '');
+    const cell = document.createElement('td');
+    cell.className = 'empty-state';
+    cell.colSpan = table.tHead?.rows[0]?.cells.length || 1;
+    cell.textContent = 'No records match your filters.';
+    empty.append(cell);
+    const update = () => {
+      const rows = [...body.rows].filter(row => !row.hasAttribute('data-table-empty'));
+      const query = (search?.value || '').trim().toLowerCase();
+      const matches = rows.filter(row => row.textContent.toLowerCase().includes(query) && filters.every(filter => !filter.value || filter.value === 'all' || row.dataset[filter.dataset.tableFilter] === filter.value));
+      const pages = Math.max(1, Math.ceil(matches.length / size));
+      page = Math.min(page, pages - 1);
+      const visible = matches.slice(page * size, (page + 1) * size);
+      const matched = new Set(matches), shown = new Set(visible);
+      rows.forEach(row => { row.hidden = !shown.has(row); row.dataset.tableMatch = String(matched.has(row)); });
+      const checks = visible.flatMap(row => [...row.querySelectorAll('[data-table-row-select]:not(:disabled)')]);
+      if (selectAll) {
+        const checked = checks.filter(input => input.checked).length;
+        selectAll.checked = checks.length > 0 && checked === checks.length;
+        selectAll.indeterminate = checked > 0 && checked < checks.length;
+        selectAll.disabled = checks.length === 0;
+      }
+      if (previous) previous.disabled = page === 0;
+      if (next) next.disabled = page === pages - 1;
+      const count = root.querySelector('[data-table-count]');
+      const selected = rows.flatMap(row => [...row.querySelectorAll('[data-table-row-select]:checked')]).length;
+      if (count) count.textContent = `${matches.length ? page * size + 1 : 0}–${Math.min((page + 1) * size, matches.length)} of ${matches.length} ${root.dataset.tableLabel || 'records'}${selected ? ` · ${selected} selected` : ''}`;
+      const status = root.querySelector('[data-table-page-status]');
+      if (status) status.textContent = `${page + 1} / ${pages}`;
+      body.append(empty);
+      empty.hidden = matches.length > 0;
+    };
+    search?.addEventListener('input', () => { page = 0; update(); });
+    filters.forEach(filter => filter.addEventListener('change', () => { page = 0; update(); }));
+    previous?.addEventListener('click', () => { page = Math.max(0, page - 1); update(); });
+    next?.addEventListener('click', () => { page++; update(); });
+    selectAll?.addEventListener('change', () => {
+      [...body.rows].filter(row => !row.hidden).forEach(row => row.querySelectorAll('[data-table-row-select]:not(:disabled)').forEach(input => { input.checked = selectAll.checked; }));
+      update();
+    });
+    body.addEventListener('change', update);
+    root.addEventListener('tableupdate', () => { page = 0; update(); });
+    update();
+  };
+  const initChecklist = root => {
+    const update = () => {
+      const inputs = [...root.querySelectorAll('input[type="checkbox"]')];
+      const completed = inputs.filter(input => input.checked).length;
+      const percent = inputs.length ? Math.round(completed / inputs.length * 100) : 0;
+      const count = root.querySelector('[data-checklist-count]'), percentage = root.querySelector('[data-checklist-percentage]'), progress = root.querySelector('[data-checklist-progress]');
+      if (count) count.textContent = `${completed} / ${inputs.length}`;
+      if (percentage) percentage.textContent = `${percent}%`;
+      if (progress) {
+        progress.setAttribute('aria-valuenow', percent);
+        const bar = progress.querySelector('.progress-bar');
+        if (bar) bar.style.width = `${percent}%`;
+      }
+    };
+    root.addEventListener('change', update);
+    update();
+  };
+  const init = (root = document) => {
+    const each = (selector, setup) => {
+      const elements = [...root.querySelectorAll(selector)];
+      if (root instanceof Element && root.matches(selector)) elements.unshift(root);
+      elements.forEach(element => {
+        const behaviors = initialized.get(element) || new Set();
+        if (behaviors.has(selector)) return;
+        behaviors.add(selector);
+        initialized.set(element, behaviors);
+        setup(element);
+      });
+    };
+    each('button[data-bs-toggle], button[data-bs-dismiss], button[data-bs-slide]', asButton);
+    each('.theme-toggle, [data-theme-toggle]', button => {
+      asButton(button);
+      button.addEventListener('click', () => {
+      const theme = document.documentElement.dataset.bsTheme === 'dark' ? 'light' : 'dark';
+      setTheme(theme);
+      const key = document.documentElement.dataset.themeStorage;
+      if (key) try { localStorage.setItem(key, theme); } catch { /* Theme remains usable without storage. */ }
+      });
+    });
+    each('[data-sidebar-layout]', initSidebar);
+    each('[data-notify]', button => button.addEventListener('click', () => notify(button.dataset.notify, button.dataset.toastTarget || undefined)));
+    if (window.bootstrap) {
+      each('[data-bs-toggle="tooltip"]', element => bootstrap.Tooltip.getOrCreateInstance(element));
+      each('[data-bs-toggle="popover"]', element => bootstrap.Popover.getOrCreateInstance(element));
+      each('.modal, .offcanvas', initOverlay);
+    }
+    each('[data-indeterminate]', input => { input.indeterminate = true; });
+    each('input[type="range"]', input => {
+      const update = () => {
+        if (!input.id) return;
+        document.querySelectorAll('output[for]').forEach(output => {
+          if (output.htmlFor.contains(input.id)) output.textContent = `${input.value}${output.dataset.suffix || ''}`;
+        });
+      };
+      input.addEventListener('input', update);
+      update();
+    });
+    each('[data-pagination]', initPagination);
+    each('[data-table]', initTable);
+    each('[data-checklist]', initChecklist);
+    each('[data-segment]', initSegment);
+    each('[data-date-range]', initDateRange);
+    const key = document.documentElement.dataset.themeStorage;
+    let theme = document.documentElement.dataset.bsTheme;
+    if (key) try { theme = localStorage.getItem(key) || theme; } catch { /* Respect the page theme if storage is unavailable. */ }
+    if (theme) setTheme(theme);
+  };
+  window.AdminUI = { init, setTheme, notify, hideModal };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => init(), { once: true });
+  else init();
 })();
