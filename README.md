@@ -1,5 +1,7 @@
 # Admin Dashboard Theme
 
+Open [`starter.html`](starter.html) for an empty admin dashboard shell with a sidebar, top bar, and footer. Add your page content inside `#main`; it reuses `style.css` and `script.js` for responsive navigation and theme switching, without the showcase demo.
+
 Open `index.html` for the design template. Home contains the full component showcase, grouped into Foundations, Buttons & badges, Form controls, Navigation, Feedback & states, Overlays, Cards & lists, and Dashboard & data display. The left menu links to these groups and the transaction, task, and table examples with `#` IDs.
 
 The Bootstrap showcase includes typography, color swatches, icons, avatars, button variants and sizes, badges, native form inputs and validation states, tabs, accordion, breadcrumbs, dropdowns, pagination, alerts, loading skeletons, empty states, dialogs, side panels, toasts, tooltips, popovers, lists, card layouts, carousel, collapsible content, and progress bars. Dashboard patterns include sample analytics, a date range selector with Last 24 hours / Last 7 days / Last 30 days presets and an immediate-selection calendar popover, line/donut/bar charts, searchable and paginated transactions, CSV exports, and task management. Shared CSS theme tokens style neutral buttons, inputs, cards, tabs, badges, menus, and dialogs in light and dark mode. Transactions and tasks live for the current page session; theme and workspace preferences use browser storage.
