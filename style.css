@@ -471,3 +471,11 @@ output[for] { color: var(--muted); margin-left: 6px; font-variant-numeric: tabul
 .date-range-grid :is(.range-start, .range-end) button { background: var(--primary); color: var(--primary-foreground); }
 @media (max-width: 575px) { .date-range-presets button { font-size: 12px; padding-inline: 4px; }.date-range-control { gap: 6px; } }
 @media (forced-colors: active) { .date-range-grid .in-range { background: Highlight; color: HighlightText; }.date-range-grid :is(.range-start, .range-end) button { border: 1px solid ButtonText; }.date-range-dot { background: Highlight; } }
+
+/* Component source disclosures in the showcase. */
+.example-code { min-width: 0; padding: 16px; border-top: 1px solid var(--line); }
+.example-code summary { color: var(--muted); }
+.example-code[open] summary { margin-bottom: 12px; color: var(--ink); }
+.example-code pre { max-width: 100%; max-height: 360px; overflow: auto; margin: 12px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); color: var(--ink); font-size: 12px; line-height: 1.6; }
+.example-code pre code { padding: 0; background: transparent; color: inherit; font-size: inherit; }
+.metric-grid > .example-code { grid-column: 1 / -1; }

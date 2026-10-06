@@ -4,7 +4,7 @@ Open `index.html` for the design template. Home contains the full component show
 
 The Bootstrap showcase includes typography, color swatches, icons, avatars, button variants and sizes, badges, native form inputs and validation states, tabs, accordion, breadcrumbs, dropdowns, pagination, alerts, loading skeletons, empty states, dialogs, side panels, toasts, tooltips, popovers, lists, card layouts, carousel, collapsible content, and progress bars. Dashboard patterns include sample analytics, a date range selector with Last 24 hours / Last 7 days / Last 30 days presets and an immediate-selection calendar popover, line/donut/bar charts, searchable and paginated transactions, CSV exports, and task management. Shared CSS theme tokens style neutral buttons, inputs, cards, tabs, badges, menus, and dialogs in light and dark mode. Transactions and tasks live for the current page session; theme and workspace preferences use browser storage.
 
-Reuse on another site by copying **`style.css` and `script.js`**, then expanding **View code** beneath an example in [`standalone.html`](standalone.html) to copy its component HTML. Code blocks come directly from the preview markup before initialization, including matching companion dialogs and toasts. Each disclosure includes dependencies and usage notes, with JavaScript event examples where needed; **View setup code** shows the page includes. The standalone gallery has no sidebar, workspace, demo script, or original showcase IDs. It uses ordinary document scrolling and contains two independent date pickers.
+Reuse on another site by copying **`style.css` and `script.js`**, then expanding **View code** beneath an example in [`index.html`](index.html) to copy its component HTML. Code blocks come directly from the preview markup after sample transactions and charts render, before component initialization, including matching companion dialogs and toasts. Each disclosure includes dependencies and usage notes, with JavaScript event examples where needed; **View setup code** shows the page includes. Copied components work without the sidebar, workspace, or demo script. Connect forms, exports, and other business actions in your own application.
 
 Load Bootstrap before the theme and component script:
 
@@ -43,7 +43,7 @@ Font Awesome is optional: load the showcase's icon stylesheet if you copy `fa-*`
 | Segmented controls | `data-segment` group with `data-value` buttons and `aria-pressed`; listen for `segmentchange` (`{ value }`); supports arrow keys and Home/End |
 | Date range | `data-date-range` wrapper, `.date-range-trigger` button, optional presets/hidden form inputs; see below |
 | Tables | Add `.ui-table` to opt into themed table styles; use `.dashboard-table-wrap` for horizontal scrolling |
-| Searchable/paginated/selectable tables | Wrap in `data-table`; optional `data-table-page-size="6"`, search, filters, selection, count, and page controls as in `standalone.html`; all state stays inside that wrapper |
+| Searchable/paginated/selectable tables | Wrap in `data-table`; optional `data-table-page-size="6"`, search, filters, selection, count, and page controls as in the transaction example in `index.html`; all state stays inside that wrapper |
 | Checklists | Wrap checkbox rows in `data-checklist`; optional `data-checklist-count`, `data-checklist-percentage`, and `data-checklist-progress` with a `.progress-bar`; updates on `change` |
 | Metrics, charts, activity feeds, product lists, goals | Copy the card/SVG/chart markup and classes; supply your own data and actions |
 | Sidebar/application shell | Opt into `data-sidebar-layout` on the shell, use the existing sidebar/workspace classes; add `.dashboard-page` only for the fixed-height dashboard with internal scrolling |
@@ -78,7 +78,7 @@ For tables, `data-table-search` searches row text; a select with `data-table-fil
 
 The theme applies its palette/type defaults site-wide. Table styling is explicitly opt-in, and fixed dashboard scrolling is opt-in. Static components need only CSS; interactive components use their native, Bootstrap, or shared behavior. Your forms' submission, backend requests, chart data, CSV/report exports, and business actions belong to your application. **`demo.js` contains only the showcase's sample transactions, analytics, exports, task creation, and workspace preferences; other sites do not need it.**
 
-Run `node checks/standalone.cjs` for isolated component, repeated initialization, multi-instance, normal-scrolling, and form/event checks. The existing home, overlay, and date range checks still exercise the original showcase.
+Run `node checks/components.cjs` for code disclosures, copied markup and references, isolated components, repeated initialization, multi-instance behavior, normal scrolling, and form/event checks. The home, overlay, and date range checks exercise the full showcase.
 
 Serve locally with `python3 -m http.server 8000`, then visit `http://localhost:8000/index.html`. Bootstrap and Font Awesome load from the existing CDN links, so an internet connection is required.
 

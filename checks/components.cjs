@@ -1,22 +1,31 @@
-// Run with the local server and Playwright available: node checks/standalone.cjs
+// Run with the local server and Playwright available: node checks/components.cjs
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const path = require('node:path');
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
   try {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    let page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.clock.setFixedTime(new Date('2026-10-06T12:00:00'));
-    await page.goto(new URL('standalone.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
+    // Capture the same preview source before DOM-ready component initialization.
+    await page.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
+      window.previewSources = [...document.querySelectorAll('.example-code')].map(disclosure => {
+        const preview = disclosure.dataset.codeSource
+          ? document.querySelector(disclosure.dataset.codeSource)
+          : disclosure.closest('.dashboard-panel, .metric-grid, .card');
+        if (!preview) return null;
+        const clone = preview.cloneNode(true);
+        clone.querySelectorAll('.example-code').forEach(element => element.remove());
+        return clone.outerHTML;
+      });
+    }, { once: true }));
+    await page.goto(new URL('index.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
     await page.waitForFunction(() => document.querySelectorAll('.date-range-calendar').length === 2);
-    assert.equal(await page.locator('.workspace, .sidebar, script[src="demo.js"]').count(), 0);
-    assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).overflow), 'visible');
-    assert.equal(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight), true, 'Ordinary document scrolling');
-    assert.equal(await page.locator('#transaction-rows, #date-range-trigger, #workspace-name').count(), 0, 'No showcase IDs');
+    const showcase = page;
     const codeExamples = page.locator('details.example-code');
-    assert.equal(await codeExamples.count(), await page.locator('.dashboard-panel, .transaction-panel, .date-example').count() + 1, 'Every example plus page setup has code');
+    assert.equal(await codeExamples.count(), await page.locator('.dashboard-panel, .metric-grid, #generic-table .card, .demo-dashboard-heading').count() + 1, 'Every example plus page setup has code');
     assert.equal(await page.locator('details.example-code[open]').count(), 0, 'Code starts collapsed');
     const disclosure = codeExamples.nth(1);
     await disclosure.locator('summary').focus();
@@ -25,22 +34,17 @@ const path = require('node:path');
     await page.keyboard.press('Enter');
     assert.equal(await disclosure.locator('pre').isVisible(), false, 'Keyboard closes code');
     const documentedHtml = await codeExamples.locator('pre[aria-label="HTML example"] code').allTextContents();
-    const pageSource = await (await page.request.get(page.url())).text();
-    await page.evaluate(({ pageSource, documentedHtml }) => {
-      const original = new DOMParser().parseFromString(pageSource, 'text/html');
+    await page.evaluate(documentedHtml => {
       const normalize = html => html.replace(/>\s+</g, '><').trim();
-      [...original.querySelectorAll('.example-code')].slice(1).forEach((disclosure, index) => {
-        const preview = disclosure.closest('.dashboard-panel, .transaction-panel, .date-example');
-        const source = preview.matches('.date-example') ? preview.querySelector('form') : preview;
-        const expected = source.cloneNode(true);
-        expected.querySelectorAll('.example-code').forEach(element => element.remove());
+      window.previewSources.forEach((expected, index) => {
+        if (!expected) return;
         const template = document.createElement('template');
-        template.innerHTML = documentedHtml[index + 1];
-        if (normalize(template.content.firstElementChild.outerHTML) !== normalize(expected.outerHTML)) {
-          throw new Error(`Code does not match preview: ${preview.querySelector('h3')?.textContent || preview.querySelector('form').ariaLabel}`);
+        template.innerHTML = documentedHtml[index];
+        if (normalize(template.content.firstElementChild.outerHTML) !== normalize(expected)) {
+          throw new Error(`Code does not match initial preview: ${index}`);
         }
       });
-    }, { pageSource, documentedHtml });
+    }, documentedHtml);
     await page.evaluate(htmlExamples => {
       for (const html of htmlExamples) {
         const template = document.createElement('template');
@@ -55,14 +59,50 @@ const path = require('node:path');
         }
       }
     }, documentedHtml);
+    const examples = await codeExamples.evaluateAll(elements => elements.slice(1).map(element => ({
+      html: element.querySelector('pre[aria-label="HTML example"] code').textContent,
+      group: element.closest('.showcase-section')?.id || 'data-examples'
+    })));
+    const setup = documentedHtml[0];
+    page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    page.on('pageerror', error => errors.push(error.message));
+    await page.clock.setFixedTime(new Date('2026-10-06T12:00:00'));
+    // Build the isolation fixture from actual copied snippets, with one copy of
+    // each companion overlay. No separate gallery markup or demo.js is needed.
+    await page.setContent(setup.replace('<head>', `<head><base href="${showcase.url()}">`)
+      .replace('<!-- Paste the component HTML here. -->', '<main class="container py-4"><button type="button" class="theme-toggle">Switch theme</button></main>'));
+    await page.waitForFunction(() => window.AdminUI && window.bootstrap);
+    await page.evaluate(examples => {
+      const host = document.querySelector('main');
+      const companions = [];
+      examples.forEach(({ html, group }) => {
+        let section = document.getElementById(group);
+        if (!section) { section = document.createElement('section'); section.id = group; host.append(section); }
+        const template = document.createElement('template'); template.innerHTML = html;
+        section.append(template.content.firstElementChild);
+        companions.push(...template.content.children);
+      });
+      companions.forEach(element => {
+        const id = element.id || element.querySelector('[id]')?.id;
+        if (!id || !document.getElementById(id)) host.append(element);
+      });
+      document.querySelectorAll('[data-date-range]').forEach(range => {
+        const form = document.createElement('form'); range.before(form); form.append(range);
+      });
+      AdminUI.init(host);
+    }, examples);
+    assert.equal(await page.locator('.workspace, .sidebar, script[src="demo.js"]').count(), 0);
+    assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).overflow), 'visible');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight), true, 'Copied components use ordinary document scrolling');
+    await page.evaluate(() => AdminUI.setTheme('dark'));
     await page.evaluate(() => { AdminUI.init(); AdminUI.init(document.body); });
     await page.locator('.theme-toggle').click();
     assert.equal(await page.locator('html').getAttribute('data-bs-theme'), 'light', 'Theme must toggle once');
-    const ranges = page.locator('[data-date-range]'), first = ranges.nth(0), second = ranges.nth(1);
+    const ranges = page.locator('[data-date-range]'), first = ranges.nth(1), second = ranges.nth(0);
     const secondStart = await second.locator('[data-date-start]').inputValue();
     await page.evaluate(() => {
       window.dateEvents = [];
-      document.querySelector('[data-date-range]').addEventListener('datechange', e => window.dateEvents.push(e.detail));
+      document.querySelectorAll('[data-date-range]')[1].addEventListener('datechange', e => window.dateEvents.push(e.detail));
     });
     await first.locator('.date-range-trigger').click();
     await first.locator('[data-calendar-date="2026-10-02"]').click();
@@ -72,20 +112,20 @@ const path = require('node:path');
     assert.equal(await second.locator('[data-date-start]').inputValue(), secondStart, 'Pickers are independent');
     assert.deepEqual(await first.evaluate(el => [...new FormData(el.closest('form')).entries()]), [['report_start', '2026-10-02'], ['report_end', '2026-10-06']]);
     await page.keyboard.press('Escape');
-    assert.equal(await second.locator('[data-report-period]').count(), 0, 'Standalone picker has no preset group');
+    assert.equal(await second.locator('[data-report-period]').count(), 0, 'Copied picker has no preset group');
     assert.equal(await second.locator('[data-date-label]').textContent(), 'Choose dates');
     await second.locator('.date-range-trigger').click();
     await second.locator('[data-calendar-date="2026-10-03"]').click();
     await second.locator('[data-calendar-date="2026-10-05"]').click();
     assert.equal(await second.locator('[data-date-label]').textContent(), '03 Oct 2026 - 05 Oct 2026');
-    assert.deepEqual(await second.evaluate(el => [...new FormData(el.closest('form')).entries()]), [['invoice_start', '2026-10-03'], ['invoice_end', '2026-10-05']]);
+    assert.deepEqual(await second.evaluate(el => [...new FormData(el.closest('form')).entries()]), [['start_date', '2026-10-03'], ['end_date', '2026-10-05']]);
     assert.equal(await first.locator('[data-date-start]').inputValue(), '2026-10-02');
     await second.locator('[data-calendar-date="2026-10-05"]').click();
     await second.locator('[data-calendar-date="2026-10-05"]').click();
     assert.equal(await second.locator('[data-date-label]').textContent(), 'Choose dates', 'Clearing restores the placeholder');
     await page.keyboard.press('Escape');
-    await page.locator('#portable-demo-range').evaluate(input => { input.value = '75'; input.dispatchEvent(new Event('input')); });
-    assert.equal(await page.locator('output[for="portable-demo-range"]').textContent(), '75%');
+    await page.locator('#demo-range').evaluate(input => { input.value = '75'; input.dispatchEvent(new Event('input')); });
+    assert.equal(await page.locator('output[for="demo-range"]').textContent(), '75%');
     assert.equal(await page.locator('[data-indeterminate]').evaluate(input => input.indeterminate), true);
     await page.evaluate(() => {
       window.pageEvents = 0;
@@ -95,13 +135,13 @@ const path = require('node:path');
     assert.equal(await page.locator('[data-page-output]').textContent(), 'Page 3 of 3');
     assert.equal(await page.evaluate(() => window.pageEvents), 1);
     const table = page.locator('[data-table]').first();
-    assert.equal(await table.locator('tbody tr:not([hidden])').count(), 2);
+    assert.equal(await table.locator('tbody tr:not([hidden])').count(), 6);
     await table.locator('[data-table-page="next"]').click();
-    assert.equal(await table.locator('tbody tr:not([hidden])').textContent(), 'GraceDesign');
-    await table.locator('[data-table-filter]').selectOption('Design');
+    assert.equal(await table.locator('tbody tr:not([hidden])').count(), 6);
+    await table.locator('[data-table-filter]').selectOption('Failed');
     await table.locator('[data-table-select-all]').check();
     assert.equal(await table.locator('[data-table-row-select]:checked').count(), 2);
-    await table.locator('[data-table-search]').fill('Ada');
+    await table.locator('[data-table-search]').fill('Drew');
     assert.equal(await table.locator('tbody tr:not([hidden])').count(), 1);
     await table.locator('[data-table-search]').fill('Nobody');
     assert.equal(await table.locator('[data-table-empty]').isVisible(), true);
@@ -117,11 +157,11 @@ const path = require('node:path');
       AdminUI.init(clone);
     });
     const otherTable = page.locator('[data-table]').nth(1);
-    await otherTable.locator('[data-table-search]').fill('Linus');
+    await otherTable.locator('[data-table-search]').fill('Olivia');
     assert.equal(await otherTable.locator('tbody tr:not([hidden])').count(), 1);
     assert.equal(await table.locator('tbody tr:not([hidden])').count(), 2);
     await otherTable.evaluate(el => {
-      const row = document.createElement('tr'); row.dataset.team = 'Design';
+      const row = document.createElement('tr'); row.dataset.status = 'Failed';
       row.innerHTML = '<td></td><td>Margaret</td><td>Design</td>';
       el.querySelector('tbody').append(row);
       el.querySelector('[data-table-search]').value = 'Margaret';
@@ -134,44 +174,44 @@ const path = require('node:path');
     assert.equal(await page.locator('[data-segment] [data-value="orders"]').getAttribute('aria-pressed'), 'true');
     await page.locator('[data-segment] [data-value="orders"]').press('ArrowLeft');
     assert.equal(await page.locator('[data-segment] [data-value="revenue"]').getAttribute('aria-pressed'), 'true');
-    await page.locator('#portable-details-tab').click();
-    assert.equal(await page.locator('#portable-details-tab').getAttribute('aria-selected'), 'true');
-    await page.locator('#portable-navigation [data-bs-toggle="dropdown"]').click();
-    await page.locator('#portable-navigation [data-bs-toggle="dropdown"]').press('ArrowDown');
-    assert.equal(await page.locator('#portable-navigation .dropdown-item').first().evaluate(el => el === document.activeElement), true);
+    await page.locator('#details-tab').click();
+    assert.equal(await page.locator('#details-tab').getAttribute('aria-selected'), 'true');
+    await page.locator('#navigation [data-bs-toggle="dropdown"]').click();
+    await page.locator('#navigation [data-bs-toggle="dropdown"]').press('ArrowDown');
+    assert.equal(await page.locator('#navigation .dropdown-item').first().evaluate(el => el === document.activeElement), true);
     await page.keyboard.press('Escape');
-    await page.locator('[data-bs-target="#portable-demo-collapse"]').click();
-    await page.waitForSelector('#portable-demo-collapse.show');
-    await page.locator('#portable-overlays [data-bs-toggle="popover"]').click();
+    await page.locator('[data-bs-target="#demo-collapse"]').click();
+    await page.waitForSelector('#demo-collapse.show');
+    await page.locator('#overlays [data-bs-toggle="popover"]').click();
     await page.waitForSelector('.popover.show');
-    await page.locator('#portable-overlays [data-bs-toggle="popover"]').press('Tab');
+    await page.locator('#overlays [data-bs-toggle="popover"]').press('Tab');
     await page.waitForSelector('.popover', { state: 'hidden' });
-    await page.locator('#portable-overlays [data-bs-toggle="tooltip"]').focus();
+    await page.locator('#overlays [data-bs-toggle="tooltip"]').focus();
     await page.waitForSelector('.tooltip.show');
-    await page.locator('#portable-overlays [data-bs-toggle="tooltip"]').press('Tab');
+    await page.locator('#overlays [data-bs-toggle="tooltip"]').press('Tab');
     await page.waitForSelector('.tooltip', { state: 'hidden' });
-    await page.locator('[data-bs-target="#portable-demo-carousel"][data-bs-slide="next"]').click();
-    await page.waitForFunction(() => document.querySelector('#portable-demo-carousel .carousel-item.active').textContent.includes('Light or dark'));
-    await page.locator('#portable-feedback [data-bs-dismiss="alert"]').click();
-    assert.equal(await page.locator('#portable-feedback .alert-dismissible').count(), 0);
-    const trigger = page.locator('#portable-overlays [data-bs-target="#portable-transaction-modal"]');
+    await page.locator('[data-bs-target="#demo-carousel"][data-bs-slide="next"]').click();
+    await page.waitForFunction(() => document.querySelector('#demo-carousel .carousel-item.active').textContent.includes('Light or dark'));
+    await page.locator('#feedback [data-bs-dismiss="alert"]').click();
+    assert.equal(await page.locator('#feedback .alert-dismissible').count(), 0);
+    const trigger = page.locator('#overlays [data-bs-target="#transaction-modal"]');
     await trigger.click();
-    await page.waitForFunction(() => document.activeElement.id === 'portable-new-customer');
-    assert.equal(await page.locator('#portable-foundations').evaluate(el => el.inert), true, 'Background inside an ordinary main is inert');
-    await page.locator('#portable-new-customer').fill('Draft');
+    await page.waitForFunction(() => document.activeElement.id === 'new-customer');
+    assert.equal(await page.locator('#foundations').evaluate(el => el.inert), true, 'Background inside an ordinary main is inert');
+    await page.locator('#new-customer').fill('Draft');
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#portable-transaction-modal', { state: 'hidden' });
+    await page.waitForSelector('#transaction-modal', { state: 'hidden' });
     await page.waitForSelector('.modal-backdrop', { state: 'hidden' });
-    await page.waitForFunction(() => document.querySelector('#portable-new-customer').value === '');
-    assert.equal(await page.locator('#portable-new-customer').inputValue(), '');
-    assert.equal(await page.locator('#portable-foundations').evaluate(el => el.inert), false);
+    await page.waitForFunction(() => document.querySelector('#new-customer').value === '');
+    assert.equal(await page.locator('#new-customer').inputValue(), '');
+    assert.equal(await page.locator('#foundations').evaluate(el => el.inert), false);
     assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
-    await page.locator('#portable-overlays [data-bs-target="#portable-notifications"]').click();
-    await page.waitForSelector('#portable-notifications.show');
+    await page.locator('#overlays [data-bs-target="#notifications"]').click();
+    await page.waitForSelector('#notifications.show');
     await page.keyboard.press('Escape');
-    await page.waitForSelector('#portable-notifications', { state: 'hidden' });
-    await page.evaluate(() => AdminUI.notify('Standalone toast'));
-    assert.equal(await page.locator('[data-ui-toast] .toast-body').textContent(), 'Standalone toast');
+    await page.waitForSelector('#notifications', { state: 'hidden' });
+    await page.evaluate(() => AdminUI.notify('Copied toast'));
+    assert.equal(await page.locator('[data-ui-toast] .toast-body').textContent(), 'Copied toast');
     await page.evaluate(() => {
       const button = document.querySelector('[data-notify]');
       button.setAttribute('data-bs-toggle', 'tooltip');
@@ -223,13 +263,13 @@ const path = require('node:path');
     assert.equal(await isolated.locator('[data-date-start]').inputValue(), '2026-10-01', 'Invalid initial date is ignored');
     await codeExamples.evaluateAll(elements => elements.forEach(element => { element.open = true; }));
     for (const theme of ['dark', 'light']) {
-      await page.evaluate(theme => AdminUI.setTheme(theme), theme);
+      await showcase.evaluate(theme => AdminUI.setTheme(theme), theme);
       for (const width of [1440, 390, 320]) {
-        await page.setViewportSize({ width, height: 844 });
-        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Standalone overflow at ${width}px (${theme})`);
+        await showcase.setViewportSize({ width, height: 844 });
+        assert.equal(await showcase.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Showcase code overflow at ${width}px (${theme})`);
       }
     }
     assert.deepEqual(errors, []);
-    console.log(`Standalone checks passed: ${documentedHtml.length} code examples, keyboard disclosures, copied references, ${snippets.length} isolated components, empty page without Bootstrap, repeat init, date instances/events/forms, tables, checklist, pagination, segments, native inputs, Bootstrap interactions, nested overlays, themes, and mobile with code expanded.`);
+    console.log(`Component checks passed: ${documentedHtml.length} code examples, keyboard disclosures, copied references, ${snippets.length} isolated components, empty page without Bootstrap, repeat init, date instances/events/forms, tables, checklist, pagination, segments, native inputs, Bootstrap interactions, nested overlays, themes, and mobile with code expanded.`);
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
