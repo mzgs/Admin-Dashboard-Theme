@@ -1,5 +1,9 @@
 # Admin Dashboard Theme
 
+Open [`finance.html`](finance.html) for the Finance Dashboard, inspired by [Shadcn UI Kit's finance layout](https://shadcnuikit.com/dashboard/finance). It includes financial metrics, income sources, monthly expenses, a spending breakdown, searchable transactions, savings progress, and a wallet carousel. It reuses `style.css` and `script.js`, with page-specific styles and sample behavior in `finance.css` and `finance.js`. Both themes and mobile navigation are supported; no additional dependencies are required.
+
+The date picker filters transaction activity (initially the last 28 days); the other cards show sample portfolio snapshots. View All reveals transaction search and type filters. Reports open detailed breakdowns and download CSV files; the header download includes the portfolio overview and matching transactions. Transfer, Request, and Add New create session-only demo activity/cards. Transfers deduct from the demo balance; requests stay pending. No banking service is connected, no money moves, and no payment request is sent. The component showcase remains at `index.html`.
+
 Open [`starter.html`](starter.html) for an empty admin dashboard shell with a sidebar, top bar, and footer. Add your page content inside `#main`; it reuses `style.css` and `script.js` for responsive navigation and theme switching, without the showcase demo.
 
 Open `index.html` for the design template. Home contains the full component showcase, grouped into Foundations, Buttons & badges, Form controls, Navigation, Feedback & states, Overlays, Cards & lists, and Dashboard & data display. The left menu links to these groups and the transaction, task, and table examples with `#` IDs.
