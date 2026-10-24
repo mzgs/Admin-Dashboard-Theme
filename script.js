@@ -409,36 +409,25 @@
     };
     let balance = 12543000;
     let paymentMode = 'transfer';
-    let expanded = false;
-    let start = dayAgo(27), end = dayAgo(0);
-    const dateRange = find('[data-date-range]');
-    dateRange.querySelector('[data-date-start]').value = start;
-    dateRange.querySelector('[data-date-end]').value = end;
+    let filtersVisible = false;
     const transactions = [
       { name: 'Samantha William', ago: 0, time: '10:15 AM', type: 'income', amount: 164026, color: '#d53b99', initial: 'S' },
       { name: 'Grocery at Shop', ago: 1, time: '6:45 PM', type: 'expense', amount: 7264, color: '#39ad86', icon: 'fa-basket-shopping' },
       { name: 'Coffee', ago: 3, time: '8:30 AM', type: 'expense', amount: 865, color: '#e9a71b', icon: 'fa-mug-hot' },
       { name: 'Karen Smith', ago: 5, time: '3:50 PM', type: 'income', amount: 84250, color: '#a84cf1', initial: 'K' },
       { name: 'Transportation', ago: 7, time: '5:20 PM', type: 'expense', amount: 1852, color: '#e24d57', icon: 'fa-car-side' },
-      { name: 'Online Course Purchase', ago: 10, time: '2:10 PM', type: 'expense', amount: 12000, color: '#4f7ee6', icon: 'fa-book-open' },
-      { name: 'Freelance Project Payment', ago: 12, time: '11:00 AM', type: 'income', amount: 98075, color: '#439b55', initial: 'F' },
-      { name: 'Monthly subscription', ago: 14, time: '9:00 AM', type: 'expense', amount: 2400, color: '#76738b', icon: 'fa-repeat' },
-      { name: 'Alex Johnson', ago: 16, time: '12:30 PM', type: 'income', amount: 45000, color: '#3aabb7', initial: 'A' },
-      { name: 'Restaurant', ago: 20, time: '7:40 PM', type: 'expense', amount: 6850, color: '#d78a53', icon: 'fa-utensils' },
-      { name: 'Design project', ago: 35, time: '11:15 AM', type: 'income', amount: 125000, color: '#835bc1', initial: 'D' },
-      { name: 'Home supplies', ago: 48, time: '4:00 PM', type: 'expense', amount: 9240, color: '#3b9c83', icon: 'fa-house' }
+      { name: 'Online Course Purchase', ago: 10, time: '2:10 PM', type: 'expense', amount: 12000, color: '#4f7ee6', icon: 'fa-book-open' }
     ].map(row => ({ ...row, date: dayAgo(row.ago) }));
     const filteredTransactions = () => {
       const query = find('#transaction-search').value.trim().toLowerCase();
       const type = find('#transaction-type').value;
-      return transactions.filter(row => (!start || row.date >= start) && (!end || row.date <= end) && (type === 'all' || row.type === type) && row.name.toLowerCase().includes(query));
+      return transactions.filter(row => (type === 'all' || row.type === type) && row.name.toLowerCase().includes(query));
     };
     const renderTransactions = () => {
       const matches = filteredTransactions();
-      const visible = expanded ? matches : matches.slice(0, 7);
       const body = find('#finance-transaction-body');
       body.replaceChildren();
-      visible.forEach(row => {
+      matches.forEach(row => {
         const tr = element('tr');
         const name = element('td');
         const label = element('div', 'finance-transaction-name');
@@ -455,30 +444,27 @@
         tr.append(name, element('td', '', `${date}, ${row.time}`), type, element('td', row.type, `${sign}${money(row.amount)}`));
         body.append(tr);
       });
-      if (!visible.length) {
+      if (!matches.length) {
         const row = element('tr');
-        const cell = element('td', 'empty-state', 'No transactions match your dates or filters.');
+        const cell = element('td', 'empty-state', 'No transactions match your filters.');
         cell.colSpan = 4; row.append(cell); body.append(row);
       }
-      find('#transaction-count').textContent = `${visible.length} of ${matches.length} transactions`;
-      find('#view-transactions').textContent = expanded ? 'Show Less' : 'View All';
-      find('#view-transactions').setAttribute('aria-expanded', String(expanded));
-      find('#transaction-filters').hidden = !expanded;
+      find('#transaction-count').textContent = `${matches.length} of ${transactions.length} transactions`;
+      find('#view-transactions').textContent = filtersVisible ? 'Hide Filters' : 'Filters';
+      find('#view-transactions').setAttribute('aria-expanded', String(filtersVisible));
+      find('#transaction-filters').hidden = !filtersVisible;
     };
     find('#view-transactions').addEventListener('click', () => {
-      expanded = !expanded;
-      if (!expanded) { find('#transaction-search').value = ''; find('#transaction-type').value = 'all'; }
+      filtersVisible = !filtersVisible;
+      if (!filtersVisible) { find('#transaction-search').value = ''; find('#transaction-type').value = 'all'; }
       renderTransactions();
     });
     find('#transaction-search').addEventListener('input', renderTransactions);
     find('#transaction-type').addEventListener('change', renderTransactions);
     find('#find-transactions').addEventListener('click', () => {
-      expanded = true; renderTransactions();
+      filtersVisible = true; renderTransactions();
       location.hash = 'transactions';
       find('#transaction-search').focus({ preventScroll: true });
-    });
-    dateRange.addEventListener('datechange', ({ detail }) => {
-      start = detail.start; end = detail.end; renderTransactions();
     });
     renderTransactions();
 
@@ -592,7 +578,7 @@
       const report = key === 'overview' ? overviewReport() : reports[key];
       const rows = [['Report', 'Metric', 'Amount (USD)'], ...report.rows.map(([name, amount]) => [report.title, name, amount])];
       if (key === 'overview') {
-        rows.push([], ['Transaction period', start || 'All dates', end || 'All dates'], ['Transaction', 'Date', 'Type', 'Amount (USD)']);
+        rows.push([], ['Transaction period', 'All dates'], ['Transaction', 'Date', 'Type', 'Amount (USD)']);
         filteredTransactions().forEach(row => rows.push([row.name, row.date, row.type, row.type === 'expense' ? -row.amount / 100 : row.amount / 100]));
       }
       // Neutralize spreadsheet formulas in names entered into the demo forms.
