@@ -49,10 +49,41 @@
               <input type="hidden" name="report_start" data-date-start><input type="hidden" name="report_end" data-date-end><span id="date-range-status" data-date-status class="visually-hidden" role="status"></span>
             </div><button type="button" class="btn finance-primary icon-button" data-export="overview" aria-label="Download finance report" title="Download finance report"><i class="fa-light fa-arrow-down-to-bracket" aria-hidden="true"></i></button></div></div>
         <section class="metric-grid finance-metrics" aria-label="Financial overview">
-          <article class="dashboard-panel finance-metric"><div class="panel-header"><h2>My Balance</h2><span class="finance-trend positive"><i class="fa-light fa-arrow-trend-up" aria-hidden="true"></i> 12.5%</span></div><div class="finance-metric-body"><p class="finance-metric-value" id="finance-balance">$125,430</p><p class="finance-muted">compared to last month</p><div class="finance-balance-actions"><button type="button" class="btn finance-primary" data-payment="transfer" data-bs-toggle="modal" data-bs-target="#payment-modal"><i class="fa-light fa-arrow-up" aria-hidden="true"></i> Transfer</button><button type="button" class="btn btn-surface" data-payment="request" data-bs-toggle="modal" data-bs-target="#payment-modal"><i class="fa-light fa-arrow-down" aria-hidden="true"></i> Request</button></div></div></article>
-          <article class="dashboard-panel finance-metric"><div class="panel-header"><h2>Net Profit</h2><span class="finance-trend positive"><i class="fa-light fa-arrow-trend-up" aria-hidden="true"></i> 8.5%</span></div><div class="finance-metric-body"><p class="finance-metric-value">$38,700</p><p class="finance-muted">compared to last month</p><svg class="finance-sparkline" viewBox="0 0 260 34" preserveAspectRatio="none" role="img" aria-label="Net profit increased over the last month"><path d="M0 30 16 27 30 29 45 21 60 24 74 17 88 20 104 14 121 17 137 9 154 14 172 8 187 11 205 4 222 8 240 2 260 4"/></svg></div></article>
-          <article class="dashboard-panel finance-metric"><div class="panel-header"><h2>Expenses</h2><span class="finance-trend negative"><i class="fa-light fa-arrow-trend-down" aria-hidden="true"></i> 5.5%</span></div><div class="finance-metric-body"><p class="finance-metric-value">$26,450</p><p class="finance-muted">compared to last month</p><svg class="finance-sparkline expense-sparkline" viewBox="0 0 260 34" preserveAspectRatio="none" role="img" aria-label="Expenses decreased over the last month"><path d="M0 4 16 8 30 5 45 14 60 11 74 18 88 12 104 20 121 17 137 25 154 19 172 27 187 23 205 29 222 26 240 32 260 30"/></svg></div></article>
-          <article class="dashboard-panel finance-metric"><div class="panel-header"><h2>Pending Invoices</h2><span class="finance-trend negative">3 overdue invoices</span></div><div class="finance-metric-body"><p class="finance-metric-value">$3,200</p><div class="finance-invoice-bars" aria-hidden="true"></div><span class="visually-hidden">Three invoices are awaiting payment.</span></div></article>
+          <article class="dashboard-panel finance-metric finance-metric-balance" aria-labelledby="balance-label">
+            <div class="finance-metric-heading"><h2 id="balance-label">My Balance</h2><span class="finance-metric-icon" aria-hidden="true"><i class="fa-light fa-wallet"></i></span></div>
+            <div class="finance-metric-body">
+              <p class="finance-metric-value" id="finance-balance">$125,430</p>
+              <p class="finance-metric-comparison"><span class="finance-trend positive"><i class="fa-light fa-arrow-up-right" aria-hidden="true"></i> 12.5%</span><span>vs. last month</span></p>
+            </div>
+            <div class="finance-metric-footer finance-balance-actions">
+              <button type="button" class="btn finance-primary" data-payment="transfer" data-bs-toggle="modal" data-bs-target="#payment-modal"><i class="fa-light fa-arrow-up-right" aria-hidden="true"></i> Transfer</button>
+              <button type="button" class="btn btn-surface" data-payment="request" data-bs-toggle="modal" data-bs-target="#payment-modal"><i class="fa-light fa-arrow-down-left" aria-hidden="true"></i> Request</button>
+            </div>
+          </article>
+          <article class="dashboard-panel finance-metric" aria-labelledby="profit-label">
+            <div class="finance-metric-heading"><h2 id="profit-label">Net Profit</h2><span class="finance-metric-icon" aria-hidden="true"><i class="fa-light fa-chart-line-up"></i></span></div>
+            <div class="finance-metric-body">
+              <p class="finance-metric-value">$38,700</p>
+              <p class="finance-metric-comparison"><span class="finance-trend positive"><i class="fa-light fa-arrow-up-right" aria-hidden="true"></i> 8.5%</span><span>vs. last month</span></p>
+            </div>
+            <div class="finance-metric-footer"><svg class="finance-sparkline" viewBox="0 0 260 40" preserveAspectRatio="none" role="img" aria-label="Net profit increased over the last month"><path class="finance-sparkline-area" d="M0 30 16 27 30 29 45 21 60 24 74 17 88 20 104 14 121 17 137 9 154 14 172 8 187 11 205 4 222 8 240 2 260 4 V40 H0 Z"/><path d="M0 30 16 27 30 29 45 21 60 24 74 17 88 20 104 14 121 17 137 9 154 14 172 8 187 11 205 4 222 8 240 2 260 4"/></svg></div>
+          </article>
+          <article class="dashboard-panel finance-metric" aria-labelledby="expense-label">
+            <div class="finance-metric-heading"><h2 id="expense-label">Expenses</h2><span class="finance-metric-icon" aria-hidden="true"><i class="fa-light fa-arrow-up-from-bracket"></i></span></div>
+            <div class="finance-metric-body">
+              <p class="finance-metric-value">$26,450</p>
+              <p class="finance-metric-comparison"><span class="finance-trend positive"><i class="fa-light fa-arrow-down-right" aria-hidden="true"></i> 5.5%</span><span>vs. last month</span></p>
+            </div>
+            <div class="finance-metric-footer"><svg class="finance-sparkline expense-sparkline" viewBox="0 0 260 40" preserveAspectRatio="none" role="img" aria-label="Expenses decreased over the last month"><path class="finance-sparkline-area" d="M0 4 16 8 30 5 45 14 60 11 74 18 88 12 104 20 121 17 137 25 154 19 172 27 187 23 205 29 222 26 240 32 260 30 V40 H0 Z"/><path d="M0 4 16 8 30 5 45 14 60 11 74 18 88 12 104 20 121 17 137 25 154 19 172 27 187 23 205 29 222 26 240 32 260 30"/></svg></div>
+          </article>
+          <article class="dashboard-panel finance-metric finance-metric-invoices" aria-labelledby="invoices-label">
+            <div class="finance-metric-heading"><h2 id="invoices-label">Pending Invoices</h2><span class="finance-metric-icon" aria-hidden="true"><i class="fa-light fa-file-invoice-dollar"></i></span></div>
+            <div class="finance-metric-body">
+              <p class="finance-metric-value">$3,200</p>
+              <p class="finance-metric-comparison"><span class="finance-trend finance-trend-warning"><i class="fa-light fa-clock" aria-hidden="true"></i> 3 overdue</span><span>Awaiting payment</span></p>
+            </div>
+            <div class="finance-metric-footer"><div class="finance-invoice-bars" aria-hidden="true"></div></div>
+          </article>
         </section>
         <div class="finance-charts">
           <section class="dashboard-panel" id="income" aria-labelledby="income-title"><div class="panel-header"><h2 id="income-title">Income Sources</h2><button type="button" class="btn icon-button" data-report="income" data-bs-toggle="modal" data-bs-target="#report-modal" aria-label="Open income report"><i class="fa-light fa-arrow-up-right" aria-hidden="true"></i></button></div><div class="panel-body"><p class="finance-muted mb-1">Total Income</p><p class="finance-metric-value">$92,000</p><p class="finance-comparison"><span class="finance-trend positive"><i class="fa-light fa-arrow-trend-up" aria-hidden="true"></i> 15.5%</span><span class="finance-muted">compared to last month</span></p><div class="finance-income-track" role="img" aria-label="Rental 38 percent, Investments 30 percent, Business 20 percent, Freelance 12 percent"><span style="--share:38.04%;--source:#467cff"></span><span style="--share:30.43%;--source:#42b7a4"></span><span style="--share:19.57%;--source:#f4a408"></span><span style="--share:11.96%;--source:#a650f1"></span></div><ul class="finance-source-list"><li><span><i style="--source:#467cff"></i>Rental</span><strong>$35,000</strong></li><li><span><i style="--source:#42b7a4"></i>Investments</span><strong>$28,000</strong></li><li><span><i style="--source:#f4a408"></i>Business</span><strong>$18,000</strong></li><li><span><i style="--source:#a650f1"></i>Freelance</span><strong>$11,000</strong></li></ul></div></section>
