@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.clock.setFixedTime(new Date('2026-10-06T12:00:00'));
-    await page.goto(new URL('index.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
+    await page.goto(new URL('index_old.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
     await page.waitForSelector('#transaction-rows tr');
     const trigger = page.locator('#date-range-trigger'), calendar = page.locator('#data-examples [data-date-range] .date-range-calendar');
     const date = key => calendar.locator(`[data-calendar-date="${key}"]`);

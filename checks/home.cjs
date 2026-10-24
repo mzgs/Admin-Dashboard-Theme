@@ -27,7 +27,7 @@ const { chromium } = require('playwright');
         await page.waitForFunction(() => document.querySelector('#generic-table .table-container').scrollLeft > 0);
       }
     };
-    await page.goto(new URL('index.html', root).href);
+    await page.goto(new URL('index_old.html', root).href);
     await page.waitForSelector('#transaction-rows .transaction-check');
     // Shared component styles must work without a page wrapper.
     await page.locator('body').evaluate(body => body.classList.remove('dashboard-page'));

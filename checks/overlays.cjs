@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(new URL('index.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
+    await page.goto(new URL('index_old.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
     await page.waitForSelector('#transaction-rows tr');
     const waitClosed = async id => {
       await page.waitForSelector(`#${id}`, { state: 'hidden' });

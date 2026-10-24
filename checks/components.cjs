@@ -21,7 +21,7 @@ const path = require('node:path');
         return clone.outerHTML;
       });
     }, { once: true }));
-    await page.goto(new URL('index.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
+    await page.goto(new URL('index_old.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
     await page.waitForFunction(() => document.querySelectorAll('.date-range-calendar').length === 2);
     const showcase = page;
     const codeExamples = page.locator('details.example-code');
