@@ -99,6 +99,20 @@ const { chromium } = require('playwright');
     await isolated.setContent('<!doctype html><html lang="en" data-bs-theme="light"><body><main></main></body></html>');
     await isolated.addStyleTag({ path: path.resolve('style.css') });
     await isolated.addScriptTag({ path: path.resolve('script.js') });
+    // Bare tables receive the theme in any page, with no opt-in or example-specific classes.
+    await isolated.locator('main').evaluate(host => {
+      host.innerHTML = '<table><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody><tr><td>Example</td><td>20</td></tr><tr><td>Another</td><td>22</td></tr></tbody><tfoot><tr><th>Total</th><td>42</td></tr></tfoot></table>';
+    });
+    for (const theme of ['dark', 'light']) {
+      await isolated.evaluate(theme => AdminUI.setTheme(theme), theme);
+      assert.equal(await isolated.locator('table').getAttribute('class'), null);
+      assert.deepEqual(await isolated.locator('table').evaluate(table => {
+        const header = getComputedStyle(table.querySelector('th'));
+        const cell = getComputedStyle(table.querySelector('tbody td'));
+        const footer = getComputedStyle(table.querySelector('tfoot td'));
+        return [getComputedStyle(table).fontSize, header.height, cell.paddingLeft, cell.borderBottomWidth, footer.backgroundColor === header.backgroundColor];
+      }), ['14px', '40px', '8px', '1px', true]);
+    }
     for (const html of snippets) {
       await isolated.evaluate(html => {
         const host = document.querySelector('main'); host.innerHTML = html;

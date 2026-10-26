@@ -441,7 +441,7 @@
         const type = element('td');
         type.append(element('span', 'overview-type-badge', row.type === 'income' ? 'Income' : row.type === 'request' ? 'Requested' : 'Expenses'));
         const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '';
-        tr.append(name, element('td', '', `${date}, ${row.time}`), type, element('td', row.type === 'income' ? 'positive' : row.type === 'expense' ? 'negative' : 'neutral', `${sign}${money(row.amount)}`));
+        tr.append(name, element('td', '', `${date}, ${row.time}`), type, element('td', `numeric-cell ${row.type === 'income' ? 'positive' : row.type === 'expense' ? 'negative' : 'neutral'}`, `${sign}${money(row.amount)}`));
         body.append(tr);
       });
       if (!matches.length) {

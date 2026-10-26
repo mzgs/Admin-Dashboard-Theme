@@ -16,7 +16,10 @@ const { chromium } = require('playwright');
       await page.mouse.wheel(0, -200);
       await page.waitForFunction(top => document.querySelector('.dashboard-scroll').scrollTop < top, before);
       await page.waitForTimeout(300); // Let the wheel gesture finish before changing its target or direction.
-      await table.hover({ position: { x: 100, y: 100 } });
+      // Move within the visible table without hover() scrolling a short table back to the bottom.
+      const bounds = await table.boundingBox();
+      const scrollBounds = await page.locator('.dashboard-scroll').boundingBox();
+      await page.mouse.move(bounds.x + 100, Math.max(bounds.y, scrollBounds.y) + 60);
       const after = await page.locator('.dashboard-scroll').evaluate(element => element.scrollTop);
       await page.mouse.wheel(0, 200);
       await page.waitForFunction(top => document.querySelector('.dashboard-scroll').scrollTop > top, after);
@@ -119,7 +122,7 @@ const { chromium } = require('playwright');
           ['#generic-table table', 'fontSize', '14px'],
           ['#generic-table td', 'paddingLeft', '8px'],
           ['.table-section', 'minWidth', '0px'],
-          ['.card > .table-container', 'borderRadius', '11px'],
+          ['#generic-table .table-container', 'borderRadius', '0px'],
           ['.modal-content', 'borderRadius', '12px'],
           ['.modal-footer', 'paddingTop', '16px'],
           ['.toast-body', 'fontSize', '13px']
@@ -351,7 +354,31 @@ const { chromium } = require('playwright');
       await page.waitForFunction(target => document.querySelector(`.sidebar-nav a[href="${target}"]`).getAttribute('aria-current') === 'location', href);
     }
     await page.click('.sidebar-nav a[href="#generic-table"]');
-    assert.equal(await page.locator('#generic-table tbody tr').count(), 24);
+    const companies = page.locator('#generic-table');
+    const visibleCompanies = companies.locator('tbody tr:not([hidden]):not([data-table-empty])');
+    assert.equal(await companies.locator('tbody tr:not([data-table-empty])').count(), 24);
+    assert.equal(await visibleCompanies.count(), 10);
+    assert.equal(await companies.locator('[data-table-count]').textContent(), '1–10 of 24 companies');
+    assert.equal(await companies.locator('[data-table-page="previous"]').isDisabled(), true);
+    await companies.locator('[data-table-page="next"]').click();
+    assert.equal(await visibleCompanies.first().locator('.label-cell span:last-child').textContent(), 'Vertex Services');
+    assert.equal(await companies.locator('[data-table-count]').textContent(), '11–20 of 24 companies');
+    await companies.locator('[data-table-page="next"]').click();
+    assert.equal(await visibleCompanies.count(), 4);
+    assert.equal(await companies.locator('[data-table-page="next"]').isDisabled(), true);
+    await companies.locator('[data-table-search]').fill('London');
+    assert.equal(await visibleCompanies.count(), 2);
+    assert.equal(await companies.locator('[data-table-page-status]').textContent(), '1 / 1');
+    assert.equal(await companies.locator('[data-table-count]').textContent(), '1–2 of 2 companies');
+    await companies.locator('[data-table-search]').fill('no matching company');
+    assert.equal(await visibleCompanies.count(), 0);
+    assert.equal(await companies.locator('[data-table-empty]').isVisible(), true);
+    assert.equal(await companies.locator('[data-table-count]').textContent(), '0–0 of 0 companies');
+    assert.equal(await companies.locator('[data-table-page="next"]').isDisabled(), true);
+    assert.equal(await companies.locator('[data-table-page="previous"]').isDisabled(), true);
+    assert.equal(await companies.locator('tfoot .numeric-cell').textContent(), '$3,721,655.54');
+    await companies.locator('[data-table-search]').fill('');
+    assert.equal(await visibleCompanies.count(), 10);
     assert.equal(await page.locator('#generic-table').evaluate(element => {
       const scroll = document.querySelector('.dashboard-scroll').getBoundingClientRect();
       const rect = element.getBoundingClientRect();
