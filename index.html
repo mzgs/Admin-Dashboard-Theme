@@ -9,7 +9,7 @@
   <title>Admin Dashboard · Evergreen</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://mzgs.github.io/fa7/css/all.css">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body class="sidebar-expanded dashboard-page" data-sidebar-layout>
   <a class="visually-hidden-focusable skip-link" href="#main">Skip to dashboard</a>
@@ -100,39 +100,33 @@
         <section class="overview-insights" aria-labelledby="insights-title">
           <div class="overview-insights-heading"><h2 id="insights-title">More insights</h2><span class="overview-muted">Your monthly snapshot</span></div>
           <div class="metric-grid overview-metrics">
-            <article class="dashboard-panel overview-insight overview-insight-comparison" aria-labelledby="profit-try-title">
-              <div class="overview-insight-top">
-                <h3 id="profit-try-title">Total profit (TRY)</h3>
+            <article class="dashboard-panel overview-insight overview-insight-stat" aria-labelledby="visits-title">
+              <div class="overview-insight-stat-heading">
+                <div><h3 id="visits-title">Visits</h3><p class="overview-insight-value">1.85M</p></div>
+                <span class="overview-activity-icon text-primary" aria-hidden="true"><i class="fa-light fa-chart-line"></i></span>
               </div>
-              <div class="overview-comparison-body">
-                <p class="overview-insight-value overview-comparison-value">₺2,693.11</p>
-                <span class="overview-metric-icon overview-comparison-icon" aria-hidden="true"><i class="fa-light fa-arrow-trend-up"></i></span>
-              </div>
-              <p class="overview-comparison-detail"><span>$64.12</span><span class="overview-comparison-trend"><i class="fa-light fa-arrow-trend-up" aria-hidden="true"></i><span class="visually-hidden">Up </span>438.6%</span></p>
+              <p class="overview-insight-stat-comparison"><span class="text-danger"><i class="fa-light fa-arrow-down-right" aria-hidden="true"></i><span class="visually-hidden">Down </span>18.6%</span><span>vs. last 30 days</span></p>
             </article>
-            <article class="dashboard-panel overview-insight overview-insight-capacity" aria-labelledby="budget-title">
-              <div class="overview-insight-top"><h3 id="budget-title">Monthly budget</h3><span class="overview-neutral-badge">88% used</span></div>
-              <p class="overview-insight-value">$3,550 <span>left</span></p>
-              <div class="overview-insight-capacity-detail">
-                <div class="overview-insight-labels"><span>Spent <strong>$26,450</strong></span><span>of $30,000</span></div>
-                <div class="progress" role="progressbar" aria-label="Monthly budget used" aria-valuenow="88.17" aria-valuemin="0" aria-valuemax="100" aria-valuetext="$26,450 spent of $30,000"><div class="progress-bar" style="width:88.17%"></div></div>
+            <article class="dashboard-panel overview-insight overview-insight-stat" aria-labelledby="visitors-title">
+              <div class="overview-insight-stat-heading">
+                <div><h3 id="visitors-title">Unique visitors</h3><p class="overview-insight-value">738.2K</p></div>
+                <span class="overview-activity-icon text-primary" aria-hidden="true"><i class="fa-light fa-users"></i></span>
               </div>
+              <p class="overview-insight-stat-comparison"><span class="text-success"><i class="fa-light fa-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden">Up </span>11.2%</span><span>vs. last 30 days</span></p>
             </article>
-            <article class="dashboard-panel overview-insight overview-insight-dual" aria-labelledby="cashflow-title">
-              <div class="overview-insight-top"><h3 id="cashflow-title">Net cash flow</h3><i class="fa-light fa-arrows-rotate" aria-hidden="true"></i></div>
-              <p class="overview-insight-value">+$65,550</p>
-              <div class="overview-insight-flows">
-                <div><div class="overview-insight-labels"><span>Money in</span><strong>$92,000</strong></div><div class="overview-insight-flow" role="img" aria-label="Money in: $92,000"><span style="width:100%"></span></div></div>
-                <div><div class="overview-insight-labels"><span>Money out</span><strong>$26,450</strong></div><div class="overview-insight-flow" role="img" aria-label="Money out: $26,450, about 29 percent of money in"><span style="width:28.75%"></span></div></div>
+            <article class="dashboard-panel overview-insight overview-insight-stat" aria-labelledby="visit-duration-title">
+              <div class="overview-insight-stat-heading">
+                <div><h3 id="visit-duration-title">Avg. visit duration</h3><p class="overview-insight-value"><time datetime="PT17M23S">17<span>m</span> 23<span>s</span></time></p></div>
+                <span class="overview-activity-icon text-primary" aria-hidden="true"><i class="fa-light fa-clock"></i></span>
               </div>
+              <p class="overview-insight-stat-comparison"><span class="text-success"><i class="fa-light fa-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden">Up </span>9.22%</span><span>vs. last 30 days</span></p>
             </article>
-            <article class="dashboard-panel overview-insight overview-insight-coverage" aria-labelledby="reserve-title">
-              <div class="overview-insight-top"><h3 id="reserve-title">Emergency fund</h3><span class="overview-metric-icon" aria-hidden="true"><i class="fa-light fa-shield-check"></i></span></div>
-              <div class="overview-insight-coverage-body">
-                <div><p class="overview-insight-value">4.8 <span>months</span></p><p class="overview-insight-note">of expenses covered</p></div>
-                <div class="overview-insight-ring" role="progressbar" aria-label="Emergency fund goal" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" aria-valuetext="4.8 of 6 months covered"><span>80%</span></div>
+            <article class="dashboard-panel overview-insight overview-insight-stat" aria-labelledby="bounce-rate-title">
+              <div class="overview-insight-stat-heading">
+                <div><h3 id="bounce-rate-title">Bounce rate</h3><p class="overview-insight-value">42.8%</p></div>
+                <span class="overview-activity-icon text-primary" aria-hidden="true"><i class="fa-light fa-arrow-right-from-bracket"></i></span>
               </div>
-              <div class="overview-insight-coverage-footer"><span class="overview-neutral-badge">Goal: 6 months</span></div>
+              <p class="overview-insight-stat-comparison"><span class="text-success"><i class="fa-light fa-arrow-down-right" aria-hidden="true"></i><span class="visually-hidden">Down </span>2.83%</span><span>vs. last 30 days</span></p>
             </article>
           </div>
         </section>
