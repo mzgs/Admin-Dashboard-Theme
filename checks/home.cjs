@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
       }
     };
     await page.goto(new URL('index_old.html', root).href);
-    await page.waitForSelector('#transaction-rows .transaction-check');
+    await page.waitForSelector('#transaction-rows .record-check');
     // Shared component styles must work without a page wrapper.
     await page.locator('body').evaluate(body => body.classList.remove('dashboard-page'));
     // Theme tokens must cover default, pressed, disabled, and keyboard-focus states.
@@ -131,7 +131,7 @@ const { chromium } = require('playwright');
           ['.modal-footer', 'paddingTop', '16px'],
           ['.toast-body', 'fontSize', '13px']
         ]) check(document.querySelector(selector), property, expected);
-        const rowCheckbox = document.querySelector('.transaction-check');
+        const rowCheckbox = document.querySelector('.record-check');
         rowCheckbox.checked = true;
         check(rowCheckbox.closest('td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
         rowCheckbox.checked = false;
@@ -278,7 +278,7 @@ const { chromium } = require('playwright');
     await page.fill('#transaction-search', 'Lana');
     assert.equal(await page.locator('#transaction-rows tr:not([hidden])').count(), 1);
     await page.check('#select-transactions');
-    assert.equal(await page.locator('.transaction-check:checked').count(), 1);
+    assert.equal(await page.locator('.record-check:checked').count(), 1);
     await page.fill('#transaction-search', 'no-matching-customer');
     assert.equal(await page.locator('.empty-state').count(), 1);
     assert.equal(await page.locator('#select-transactions').isDisabled(), true);
@@ -295,7 +295,7 @@ const { chromium } = require('playwright');
     await page.fill('#new-amount', '123.45');
     await page.click('#transaction-form [type="submit"]');
     await page.waitForSelector('#transaction-modal', { state: 'hidden' });
-    assert.equal(await page.locator('#transaction-rows tr:not([hidden]):first-child .customer-name').textContent(), unsafeName);
+    assert.equal(await page.locator('#transaction-rows tr:not([hidden]):first-child .person-name').textContent(), unsafeName);
     assert.equal(await page.locator('#transaction-rows img').count(), 0);
     assert.equal(await page.locator('#transaction-rows tr:not([hidden]):first-child .table-amount').textContent(), '$123.45');
     const [download] = await Promise.all([page.waitForEvent('download'), page.click('#export-report')]);
@@ -367,7 +367,8 @@ const { chromium } = require('playwright');
     await page.click('.sidebar-toggle');
     assert.equal(await page.locator('.sidebar').evaluate(element => element.clientWidth), 67);
     await page.click('.sidebar-toggle');
-    for (const link of await page.locator('.sidebar-nav a').all()) {
+    assert.equal(await page.locator('.sidebar-nav a[href="index.html"]').textContent(), 'Admin Dashboard');
+    for (const link of await page.locator('.sidebar-nav a[href^="#"]').all()) {
       const href = await link.getAttribute('href');
       assert.ok(href.startsWith('#'));
       assert.equal(await page.locator(href).count(), 1);

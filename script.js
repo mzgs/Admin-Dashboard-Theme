@@ -1,6 +1,6 @@
 'use strict';
 
-// Shared components and the finance dashboard. The component showcase uses demo.js.
+// Shared components and the dashboard demo. The component showcase uses demo.js.
 (() => {
   const initialized = new WeakMap();
   const openingModals = new Set();
@@ -394,8 +394,8 @@
     root.addEventListener('change', update);
     update();
   };
-  // Session-only finance dashboard data and actions.
-  const initFinanceDashboard = () => {
+  // Session-only dashboard demo data and actions.
+  const initDashboardDemo = () => {
     const find = selector => document.querySelector(selector);
     const money = cents => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
     const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -425,13 +425,13 @@
     };
     const renderTransactions = () => {
       const matches = filteredTransactions();
-      const body = find('#finance-transaction-body');
+      const body = find('#overview-record-body');
       body.replaceChildren();
       matches.forEach(row => {
         const tr = element('tr');
         const name = element('td');
-        const label = element('div', 'finance-transaction-name');
-        const avatar = element('span', 'finance-avatar transaction-avatar', row.initial || '');
+        const label = element('div', 'overview-record-name');
+        const avatar = element('span', 'overview-avatar record-avatar', row.initial || '');
         avatar.style.setProperty('--avatar-color', row.color);
         avatar.setAttribute('aria-hidden', 'true');
         if (row.icon) avatar.append(element('i', `fa-light ${row.icon}`));
@@ -439,9 +439,9 @@
         name.append(label);
         const date = new Date(`${row.date}T12:00:00`).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
         const type = element('td');
-        type.append(element('span', 'finance-type-badge', row.type === 'income' ? 'Income' : row.type === 'request' ? 'Requested' : 'Expenses'));
+        type.append(element('span', 'overview-type-badge', row.type === 'income' ? 'Income' : row.type === 'request' ? 'Requested' : 'Expenses'));
         const sign = row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '';
-        tr.append(name, element('td', '', `${date}, ${row.time}`), type, element('td', row.type, `${sign}${money(row.amount)}`));
+        tr.append(name, element('td', '', `${date}, ${row.time}`), type, element('td', row.type === 'income' ? 'positive' : row.type === 'expense' ? 'negative' : 'neutral', `${sign}${money(row.amount)}`));
         body.append(tr);
       });
       if (!matches.length) {
@@ -469,12 +469,12 @@
     renderTransactions();
 
     [38, 17, 42, 58, 25, 71, 49, 36, 79, 28, 50, 63, 46, 77, 31, 54, 89, 66, 41, 21, 48, 70, 34, 61, 84, 50, 27, 74, 45, 90, 63, 48, 80, 58, 36, 67, 95, 72, 44, 56, 79, 61].forEach(height => {
-      const bar = element('span'); bar.style.height = `${height}%`; find('.finance-invoice-bars').append(bar);
+      const bar = element('span'); bar.style.height = `${height}%`; find('.overview-mini-bars').append(bar);
     });
     const monthlyValues = [10600, 26100, 15800, 24800, 17100, 18400];
     const monthlyExpenses = monthlyValues.map((amount, index) => [new Date(today.getFullYear(), today.getMonth() - 5 + index, 1).toLocaleDateString('en-US', { month: 'short' }), amount]);
-    find('.finance-monthly-bars').setAttribute('aria-label', `Monthly expenses: ${monthlyExpenses.map(([month, value]) => `${month} ${money(value * 100)}`).join('; ')}`);
-    [...document.querySelectorAll('.finance-monthly-bars > div')].forEach((column, index) => {
+    find('.overview-monthly-bars').setAttribute('aria-label', `Monthly expenses: ${monthlyExpenses.map(([month, value]) => `${month} ${money(value * 100)}`).join('; ')}`);
+    [...document.querySelectorAll('.overview-monthly-bars > div')].forEach((column, index) => {
       column.querySelector('small').textContent = monthlyExpenses[index][0];
       column.querySelector('span').title = `${monthlyExpenses[index][0]}: ${money(monthlyExpenses[index][1] * 100)}`;
     });
@@ -491,15 +491,15 @@
       find('#wallet-next').disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
     };
     const renderCard = card => {
-      const article = element('article', `finance-credit-card ${card.color}`);
+      const article = element('article', `overview-preview-card ${card.color}`);
       article.setAttribute('aria-label', `${card.name}, ending ${card.digits}, ${money(card.balance)}`);
-      const top = element('div', 'finance-card-top');
+      const top = element('div', 'overview-card-top');
       const chip = element('i', 'fa-light fa-wifi'); chip.setAttribute('aria-hidden', 'true');
       top.append(element('span', '', card.name), chip);
-      const bottom = element('div', 'finance-card-bottom');
-      const logo = element('span', 'finance-mastercard'); logo.setAttribute('aria-hidden', 'true');
+      const bottom = element('div', 'overview-card-bottom');
+      const logo = element('span', 'overview-card-mark'); logo.setAttribute('aria-hidden', 'true');
       bottom.append(element('strong', '', money(card.balance)), logo);
-      article.append(top, element('p', 'finance-card-number', `5375 **** **** ${card.digits}`), bottom);
+      article.append(top, element('p', 'overview-card-code', `5375 **** **** ${card.digits}`), bottom);
       track.append(article);
       find('#wallet-count').textContent = `A total of ${cards.length} cards are listed`;
       requestAnimationFrame(updateWalletArrows);
@@ -548,7 +548,7 @@
       }
       if (paymentMode === 'transfer') balance -= amount;
       transactions.unshift({ name: paymentMode === 'request' ? `Request · ${recipient}` : recipient, date: dayAgo(0), time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), type: paymentMode === 'request' ? 'request' : 'expense', amount, color: '#3288d1', icon: paymentMode === 'request' ? 'fa-arrow-down' : 'fa-arrow-up' });
-      find('#finance-balance').textContent = money(balance).replace(/\.00$/, '');
+      find('#overview-total').textContent = money(balance).replace(/\.00$/, '');
       find('#transaction-search').value = ''; find('#transaction-type').value = 'all';
       renderTransactions();
       AdminUI.hideModal(find('#payment-modal'));
@@ -561,7 +561,7 @@
       summary: { title: 'Spending Summary', description: 'Everyday spending breakdown · Sample data', rows: [['Food & Drink · 48%', 540], ['Grocery · 32%', 360], ['Shopping · 13%', 146.25], ['Transport · 7%', 78.75], ['Total spending', 1125]] },
       savings: { title: 'Saving Goal', description: 'Your progress toward a $1,200 goal · Sample data', rows: [['Saved so far', 1052.98], ['Goal', 1200], ['Remaining', 147.02]] }
     };
-    const overviewReport = () => ({ title: 'Finance Overview', description: 'Portfolio snapshot · Sample data', rows: [['Balance', balance / 100], ['Net profit', 38700], ['Expenses', 26450], ['Pending invoices', 3200], ['Total income', 92000]] });
+    const overviewReport = () => ({ title: 'Dashboard Overview', description: 'Portfolio snapshot · Sample data', rows: [['Balance', balance / 100], ['Net profit', 38700], ['Expenses', 26450], ['Pending invoices', 3200], ['Total income', 92000]] });
     let selectedReport = 'overview';
     document.querySelectorAll('[data-report]').forEach(button => button.addEventListener('click', () => {
       selectedReport = button.dataset.report;
@@ -569,7 +569,7 @@
       find('#report-title').textContent = report.title;
       find('#report-description').textContent = report.description;
       find('#report-content').replaceChildren(...report.rows.map(([name, amount]) => {
-        const row = element('div', 'finance-report-row');
+        const row = element('div', 'overview-report-row');
         row.append(element('span', '', name), element('strong', '', money(Math.round(amount * 100))));
         return row;
       }));
@@ -584,9 +584,9 @@
       // Neutralize spreadsheet formulas in names entered into the demo forms.
       const csv = rows.map(row => row.map(value => `"${(typeof value === 'string' ? value.replace(/^[\s]*[=+@-]/, match => `'${match}`) : String(value)).replaceAll('"', '""')}"`).join(',')).join('\r\n');
       const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' }));
-      const link = element('a'); link.href = url; link.download = `evergreen-finance-${key}.csv`; link.click();
+      const link = element('a'); link.href = url; link.download = `evergreen-report-${key}.csv`; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      AdminUI.notify('Your finance report has been downloaded.');
+      AdminUI.notify('Your dashboard report has been downloaded.');
     };
     find('[data-export]').addEventListener('click', () => exportReport('overview'));
     find('#download-report').addEventListener('click', () => exportReport(selectedReport));
@@ -635,7 +635,7 @@
     each('[data-table]', initTable);
     each('[data-checklist]', initChecklist);
     each('[data-segment]', initSegment);
-    each('.finance-page', initFinanceDashboard);
+    each('.overview-page', initDashboardDemo);
     each('[data-date-range]', initDateRange);
     const key = document.documentElement.dataset.themeStorage;
     let theme = document.documentElement.dataset.bsTheme;
