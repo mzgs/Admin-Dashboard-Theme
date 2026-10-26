@@ -8,8 +8,8 @@ const { chromium } = require('playwright');
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(new URL('index_old.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
-    await page.waitForSelector('#transaction-rows tr');
+    await page.goto(new URL('index.html', process.env.DASHBOARD_URL || 'http://127.0.0.1:8000/').href);
+    await page.waitForSelector('#overview-record-body tr');
     const waitClosed = async id => {
       await page.waitForSelector(`#${id}`, { state: 'hidden' });
       await page.waitForSelector('.modal-backdrop, .offcanvas-backdrop', { state: 'hidden' });
@@ -40,13 +40,12 @@ const { chromium } = require('playwright');
     await page.waitForFunction(() => document.activeElement.id === 'reset-cancel');
     await page.locator('#reset-modal').click({ position: { x: 5, y: 5 } });
     assert.equal(await page.locator('#reset-modal').isVisible(), true);
-    assert.equal(await page.locator('#task-progress').getAttribute('aria-valuenow'), '40');
     await page.click('#reset-cancel');
     await waitClosed('reset-modal');
 
     const accountTrigger = page.locator('#overlays [data-bs-target="#account-modal"]');
     await accountTrigger.click();
-    await page.waitForFunction(() => document.activeElement.id === 'account-modal-title');
+    await page.waitForFunction(() => document.activeElement.id === 'account-title');
     await page.locator('#account-modal').click({ position: { x: 5, y: 5 } });
     await waitClosed('account-modal');
     assert.equal(await accountTrigger.evaluate(element => element === document.activeElement), true);

@@ -27,17 +27,15 @@ const { chromium } = require('playwright');
         await page.waitForFunction(() => document.querySelector('#generic-table .table-container').scrollLeft > 0);
       }
     };
-    await page.goto(new URL('index_old.html', root).href);
-    await page.waitForSelector('#transaction-rows .record-check');
-    // Shared component styles must work without a page wrapper.
-    await page.locator('body').evaluate(body => body.classList.remove('dashboard-page'));
+    await page.goto(new URL('index.html', root).href);
+    await page.waitForSelector('#overview-record-body tr');
     // Theme tokens must cover default, pressed, disabled, and keyboard-focus states.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const theme of ['dark', 'light']) {
       const mismatches = await page.evaluate(theme => {
         AdminUI.setTheme(theme);
         const probe = document.createElement('span');
-        document.body.append(probe);
+        document.querySelector('.overview-page').append(probe);
         const color = token => { probe.style.color = `var(${token})`; return getComputedStyle(probe).color; };
         const failures = [];
         const check = (element, property, expected) => {
@@ -94,7 +92,7 @@ const { chromium } = require('playwright');
           ['#buttons .btn-sm', 'height', '28px'],
           ['#buttons .btn-lg', 'height', '36px'],
           ['#buttons .icon-button', 'width', '32px'],
-          ['.dashboard-panel', 'borderRadius', '12px'],
+          ['#foundations .dashboard-panel', 'borderRadius', '12px'],
           ['.panel-header h3', 'fontSize', '16px'],
           ['.panel-body', 'paddingLeft', '16px'],
           ['.initial-avatar:not(.avatar-small, .avatar-large)', 'width', '32px'],
@@ -116,29 +114,19 @@ const { chromium } = require('playwright');
           ['.example-alert', 'fontSize', '14px'],
           ['.empty-icon', 'width', '32px'],
           ['.example-list .list-group-item', 'borderRadius', '8px'],
-          ['.progress', 'height', '4px'],
-          ['.dashboard-table th', 'height', '40px'],
-          ['.dashboard-table', 'fontSize', '14px'],
-          ['.dashboard-table td', 'paddingLeft', '8px'],
-          ['.dashboard-table-wrap', 'borderRadius', '8px'],
+          ['#navigation .progress', 'height', '4px'],
+          ['#generic-table th', 'height', '40px'],
+          ['#generic-table table', 'fontSize', '14px'],
+          ['#generic-table td', 'paddingLeft', '8px'],
           ['.table-section', 'minWidth', '0px'],
           ['.card > .table-container', 'borderRadius', '11px'],
-          ['#transactions', 'borderTopWidth', '0px'],
-          ['#transactions .panel-footer', 'backgroundColor', 'rgba(0, 0, 0, 0)'],
-          ['#transactions .panel-footer', 'borderTopWidth', '0px'],
-          ['#transactions .panel-footer', 'fontSize', '14px'],
           ['.modal-content', 'borderRadius', '12px'],
           ['.modal-footer', 'paddingTop', '16px'],
           ['.toast-body', 'fontSize', '13px']
         ]) check(document.querySelector(selector), property, expected);
-        const rowCheckbox = document.querySelector('.record-check');
-        rowCheckbox.checked = true;
-        check(rowCheckbox.closest('td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
-        rowCheckbox.checked = false;
-        check(rowCheckbox.closest('td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
-        for (const selector of ['#generic-table th', '.dashboard-table th', '#generic-table tfoot td']) check(document.querySelector(selector), 'backgroundColor', color('--surface-raised'));
+        for (const selector of ['#generic-table th', '#generic-table tfoot td']) check(document.querySelector(selector), 'backgroundColor', color('--surface-raised'));
         check(document.querySelector('#generic-table tbody td'), 'backgroundColor', 'rgba(0, 0, 0, 0)');
-        for (const selector of ['.card', '.dashboard-panel', '.metric-card', '.modal-content', '.toast', '.dropdown-menu', '.popover']) {
+        for (const selector of ['.card', '#foundations .dashboard-panel', '.modal-content', '.toast', '.dropdown-menu', '.popover']) {
           const element = document.querySelector(selector);
           if (element) check(element, 'backgroundColor', color('--surface'));
         }
@@ -221,12 +209,9 @@ const { chromium } = require('playwright');
     assert.equal(await menu.evaluate(element => getComputedStyle(element).animationName), 'none');
     await page.keyboard.press('Escape');
     await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'none' });
-    assert.equal(await page.locator('#transaction-rows tr:not([hidden])').count(), 6);
-    assert.equal(await page.locator('#previous-page').textContent(), 'Previous');
-    assert.equal(await page.locator('#next-page').textContent(), 'Next');
-    assert.equal(await page.locator('#home > .showcase-section').count(), 8);
-    assert.equal(await page.locator('#home #generic-table').count(), 1);
-    assert.equal(await page.locator('.showcase-index a').count(), 8);
+    assert.equal(await page.locator('#overview-record-body tr').count(), 6);
+    assert.equal(await page.locator('#ui-elements > .showcase-section').count(), 7);
+    assert.equal(await page.locator('#ui-elements #generic-table').count(), 1);
     const ids = await page.locator('[id]').evaluateAll(elements => elements.map(element => element.id));
     assert.equal(new Set(ids).size, ids.length, 'Duplicate element IDs');
     await page.locator('#demo-range').evaluate(input => { input.value = '75'; input.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -266,64 +251,53 @@ const { chromium } = require('playwright');
     await page.locator('#overlays [data-bs-toggle="tooltip"]').press('Tab');
     await page.waitForSelector('.tooltip', { state: 'hidden' });
     assert.equal(await page.locator('.mobile-menu').isVisible(), false);
-    await page.click('[data-report-period="week"]');
-    assert.equal(await page.locator('#metric-revenue').textContent(), '$12,480.00');
-    await page.click('[data-chart-metric="orders"]');
-    assert.equal(await page.locator('#chart-total').textContent(), '492');
-    await page.click('[data-report-period="month"]');
-    assert.equal(await page.locator('#chart-total').textContent(), '1,864');
-
-    await page.selectOption('#transaction-status', 'Pending');
-    assert.equal(await page.locator('#transaction-rows tr:not([hidden])').count(), 3);
-    await page.fill('#transaction-search', 'Lana');
-    assert.equal(await page.locator('#transaction-rows tr:not([hidden])').count(), 1);
-    await page.check('#select-transactions');
-    assert.equal(await page.locator('.record-check:checked').count(), 1);
+    await page.click('#find-transactions');
+    await page.fill('#transaction-search', 'Samantha');
+    assert.equal(await page.locator('#overview-record-body tr').count(), 1);
     await page.fill('#transaction-search', 'no-matching-customer');
-    assert.equal(await page.locator('.empty-state').count(), 1);
-    assert.equal(await page.locator('#select-transactions').isDisabled(), true);
+    assert.equal(await page.locator('#overview-record-body .empty-state').count(), 1);
     await page.fill('#transaction-search', '');
-    await page.selectOption('#transaction-status', 'all');
-    await page.click('#next-page');
-    assert.equal(await page.locator('#page-label').textContent(), '2 / 2');
-    await page.click('#previous-page');
-
-    await page.click('.dashboard-actions [data-bs-target="#transaction-modal"]');
-    const unsafeName = '<img src=x onerror=alert(1)>';
-    await page.fill('#new-customer', unsafeName);
+    await page.selectOption('#transaction-type', 'expense');
+    assert.equal(await page.locator('#overview-record-body tr').count(), 4);
+    await page.selectOption('#transaction-type', 'all');
+    await page.locator('[data-payment="transfer"]').click();
+    await page.fill('#payment-recipient', '<img src=x onerror=alert(1)>');
+    await page.fill('#payment-amount', '123.45');
+    await page.click('#payment-submit');
+    await page.waitForSelector('#payment-modal', { state: 'hidden' });
+    assert.equal(await page.locator('#overview-record-body tr:first-child .overview-record-name').textContent(), '<img src=x onerror=alert(1)>');
+    assert.equal(await page.locator('#overview-record-body img').count(), 0);
+    assert.equal(await page.locator('#overview-total').textContent(), '$125,306.55');
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('#quick-export')]);
+    assert.equal(download.suggestedFilename(), 'evergreen-report-overview.csv');
+    const csv = await require('node:fs/promises').readFile(await download.path(), 'utf8');
+    assert.match(csv, /125306.55/);
+    await page.locator('#overlays [data-bs-target="#transaction-modal"]').click();
+    await page.fill('#new-customer', 'Sample customer');
     await page.fill('#new-email', 'sample@example.com');
     await page.fill('#new-amount', '123.45');
     await page.click('#transaction-form [type="submit"]');
     await page.waitForSelector('#transaction-modal', { state: 'hidden' });
-    assert.equal(await page.locator('#transaction-rows tr:not([hidden]):first-child .person-name').textContent(), unsafeName);
-    assert.equal(await page.locator('#transaction-rows img').count(), 0);
-    assert.equal(await page.locator('#transaction-rows tr:not([hidden]):first-child .table-amount').textContent(), '$123.45');
-    const [download] = await Promise.all([page.waitForEvent('download'), page.click('#export-report')]);
-    assert.equal(download.suggestedFilename(), 'evergreen-month-report.csv');
-    const csv = await require('node:fs/promises').readFile(await download.path(), 'utf8');
-    assert.match(csv, /48290/);
-
-    await page.uncheck('#task-list input:first-child');
-    assert.equal(await page.locator('#task-progress').getAttribute('aria-valuenow'), '20');
-    await page.click('.panel-footer [data-bs-target="#task-modal"]');
+    assert.equal(await page.locator('[data-ui-toast] .toast-body').textContent(), 'Sample transaction submitted.');
+    await page.locator('#workflows [data-bs-target="#task-modal"]').click();
     await page.fill('#new-task', 'Check dashboard');
     await page.click('#task-form [type="submit"]');
     await page.waitForSelector('#task-modal', { state: 'hidden' });
-    assert.equal(await page.locator('#task-list input').count(), 6);
+    assert.equal(await page.locator('[data-ui-toast] .toast-body').textContent(), 'Sample task submitted.');
     await page.waitForSelector('.modal-backdrop', { state: 'hidden' });
-    // A confirmation may be clicked before Bootstrap finishes opening the dialog.
     await page.evaluate(() => {
-      document.querySelector('[data-bs-target="#reset-modal"]').click();
+      document.querySelector('#overlays [data-bs-target="#reset-modal"]').click();
       document.querySelector('#reset-tasks').click();
     });
     await page.waitForFunction(() => !document.body.classList.contains('modal-open'));
     await page.waitForSelector('#reset-modal', { state: 'hidden' });
-    assert.equal(await page.locator('#task-progress').getAttribute('aria-valuenow'), '0');
+    await page.waitForSelector('.modal-backdrop', { state: 'hidden' });
     await page.evaluate(() => {
       document.querySelector('#overlays [data-bs-target="#account-modal"]').click();
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     });
     await page.waitForFunction(() => !document.body.classList.contains('modal-open'));
+    await page.waitForSelector('.modal-backdrop', { state: 'hidden' });
     assert.equal(await page.locator('.modal-backdrop').count(), 0);
     await page.click('#details-tab');
     await page.waitForFunction(() => document.querySelector('#details-pane').classList.contains('show'));
@@ -337,20 +311,20 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('html').getAttribute('data-bs-theme'), 'light');
     await page.reload();
     assert.equal(await page.locator('html').getAttribute('data-bs-theme'), 'light');
-    await page.click('.topbar [data-bs-target="#notifications"]');
+    await page.click('#overlays [data-bs-target="#notifications"]');
     await page.waitForSelector('#notifications.show');
     await page.click('#notifications [data-bs-dismiss="offcanvas"]');
     await page.waitForSelector('#notifications', { state: 'hidden' });
     await page.click('[data-bs-target="#help-two"]');
     await page.waitForSelector('#help-two.show');
     await page.click('[data-notify="Your dashboard is up to date."]');
-    assert.equal(await page.locator('#toast-message').textContent(), 'Your dashboard is up to date.');
+    assert.equal(await page.locator('[data-ui-toast] .toast-body').textContent(), 'Your dashboard is up to date.');
 
     for (const width of [1440, 1024, 768, 575, 390, 320]) {
       await page.setViewportSize({ width, height: 844 });
       for (const period of ['day', 'month']) {
         await page.click(`[data-report-period="${period}"]`);
-        const overflow = await page.locator('.metric-value, .swatch-grid > div').evaluateAll(elements => elements
+        const overflow = await page.locator('.overview-metric-value, .swatch-grid > div').evaluateAll(elements => elements
           .filter(element => element.scrollWidth > element.clientWidth + 1).map(element => element.textContent.trim()));
         assert.deepEqual(overflow, [], `Clipped component content at ${width}px (${period})`);
       }
@@ -393,7 +367,7 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('body').evaluate(body => body.classList.contains('sidebar-mobile-open')), false);
     await checkTableScrolling();
     assert.deepEqual(errors, []);
-    console.log('Dashboard browser checks passed: animated focus/blur, keyboard rings, switch motion, dropdown keyboard navigation, forced colors, reduced motion, component groups, range, selections, pagination, carousel, collapse, alerts, tooltip, popover, charts, filters, transaction pagination, safe form rendering, export, tasks, tabs, persistence, theme states, responsive content, navigation, and generic table scrolling.');
+    console.log('Dashboard browser checks passed: animated focus/blur, keyboard rings, switch motion, dropdown keyboard navigation, forced colors, reduced motion, component groups, range, selections, pagination, carousel, collapse, alerts, tooltip, popover, filters, safe transfer rendering, report export, example forms, tabs, persistence, theme states, responsive content, navigation, and generic table scrolling.');
   } finally {
     await browser.close();
   }
